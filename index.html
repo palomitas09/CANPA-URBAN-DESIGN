@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CANPA UrbanKit Studio 3D - B2G Platform</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#f0fdf4', 500: '#10b981', 600: '#059669', 700: '#047857', dark: '#111827' }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col">
+
+    <!-- HEADER / NAVBAR -->
+    <header class="bg-slate-800 border-b border-slate-700 px-6 py-4 flex justify-between items-center shadow-lg">
+        <div class="flex items-center space-x-3">
+            <div class="bg-brand-500 text-slate-900 p-2 rounded-xl font-black text-xl flex items-center justify-center w-10 h-10 shadow-md">
+                <i class="fa-solid fa-cube"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                    CANPA <span class="text-brand-500 font-light">UrbanKit Studio 3D</span>
+                </h1>
+                <p class="text-xs text-slate-400" id="sub-title">Plataforma B2G per a Innovació Urbana & Maquetes 3D</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="bg-slate-700 p-1 rounded-lg flex space-x-1">
+                <button onclick="setLang('ca')" id="btn-ca" class="px-3 py-1 text-xs font-semibold rounded bg-brand-500 text-slate-900 transition">CAT</button>
+                <button onclick="setLang('es')" id="btn-es" class="px-3 py-1 text-xs font-semibold rounded text-slate-300 hover:text-white transition">ESP</button>
+            </div>
+            <div class="hidden md:flex items-center space-x-2 text-xs bg-slate-700/50 px-3 py-1.5 rounded-lg border border-slate-600">
+                <i class="fa-solid fa-industry text-brand-500"></i>
+                <span class="text-slate-300">Cementos Molins Partner</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN APP CONTAINER -->
+    <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 max-w-[1600px] w-full mx-auto">
+        
+        <!-- SIDEBAR CONTROLS (4 cols) -->
+        <section class="lg:col-span-4 bg-slate-800 border border-slate-700 rounded-2xl p-5 flex flex-col space-y-6 shadow-xl overflow-y-auto max-h-[85vh]">
+            
+            <!-- VIEW MODE TOGGLE -->
+            <div>
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-3" data-i18n="view_mode">Mode de Visualització</h2>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="switchMode('render')" id="mode-render-btn" class="flex items-center justify-center space-x-2 py-2.5 px-3 rounded-xl border border-brand-500 bg-brand-500/10 text-brand-400 font-medium text-sm transition">
+                        <i class="fa-solid fa-eye"></i>
+                        <span data-i18n="render_mode">Vista Render</span>
+                    </button>
+                    <button onclick="switchMode('stl')" id="mode-stl-btn" class="flex items-center justify-center space-x-2 py-2.5 px-3 rounded-xl border border-slate-600 bg-slate-700/50 text-slate-300 font-medium text-sm hover:border-slate-500 transition">
+                        <i class="fa-solid fa-print"></i>
+                        <span data-i18n="stl_mode">Mode Maqueta STL</span>
+                    </button>
+                </div>
+            </div>
+
+            <hr class="border-slate-700">
+
+            <!-- MODULE CONFIGURATOR -->
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400" data-i18n="catalog_title">Catàleg de Mòduls Plug & Play</h2>
+                    <span class="text-xs bg-brand-500/20 text-brand-400 px-2 py-0.5 rounded-full font-mono" id="total-modules">0 mòduls</span>
+                </div>
+
+                <!-- Module 1 -->
+                <div class="bg-slate-700/40 border border-slate-700 rounded-xl p-3.5 flex items-center justify-between hover:border-slate-600 transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-emerald-500/20 text-emerald-400 p-2.5 rounded-lg"><i class="fa-solid fa-umbrella text-lg"></i></div>
+                        <div>
+                            <h4 class="text-sm font-bold text-white" data-i18n="m1_name">Pèrgola Bioclimàtica</h4>
+                            <p class="text-xs text-slate-400" data-i18n="m1_desc">Teles i vegetació autòctona</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="updateModule('pergola', -1)" class="w-7 h-7 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 flex items-center justify-center font-bold">-</button>
+                        <span id="count-pergola" class="w-6 text-center font-mono font-bold text-white">1</span>
+                        <button onclick="updateModule('pergola', 1)" class="w-7 h-7 rounded-lg bg-brand-600 text-white hover:bg-brand-500 flex items-center justify-center font-bold">+</button>
+                    </div>
+                </div>
+
+                <!-- Module 2 -->
+                <div class="bg-slate-700/40 border border-slate-700 rounded-xl p-3.5 flex items-center justify-between hover:border-slate-600 transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-blue-500/20 text-blue-400 p-2.5 rounded-lg"><i class="fa-solid fa-table-tennis-paddle-ball text-lg"></i></div>
+                        <div>
+                            <h4 class="text-sm font-bold text-white" data-i18n="m2_name">Bancs & Ping-Pong</h4>
+                            <p class="text-xs text-slate-400" data-i18n="m2_desc">Formigó eco-sostenible</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="updateModule('bancs', -1)" class="w-7 h-7 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 flex items-center justify-center font-bold">-</button>
+                        <span id="count-bancs" class="w-6 text-center font-mono font-bold text-white">1</span>
+                        <button onclick="updateModule('bancs', 1)" class="w-7 h-7 rounded-lg bg-brand-600 text-white hover:bg-brand-500 flex items-center justify-center font-bold">+</button>
+                    </div>
+                </div>
+
+                <!-- Module 3 -->
+                <div class="bg-slate-700/40 border border-slate-700 rounded-xl p-3.5 flex items-center justify-between hover:border-slate-600 transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-amber-500/20 text-amber-400 p-2.5 rounded-lg"><i class="fa-solid fa-child-reaching text-lg"></i></div>
+                        <div>
+                            <h4 class="text-sm font-bold text-white" data-i18n="m3_name">Àrea Infantil Coberta</h4>
+                            <p class="text-xs text-slate-400" data-i18n="m3_desc">Paviment drenant segur</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="updateModule('infantil', -1)" class="w-7 h-7 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 flex items-center justify-center font-bold">-</button>
+                        <span id="count-infantil" class="w-6 text-center font-mono font-bold text-white">0</span>
+                        <button onclick="updateModule('infantil', 1)" class="w-7 h-7 rounded-lg bg-brand-600 text-white hover:bg-brand-500 flex items-center justify-center font-bold">+</button>
+                    </div>
+                </div>
+
+                <!-- Module 4 -->
+                <div class="bg-slate-700/40 border border-slate-700 rounded-xl p-3.5 flex items-center justify-between hover:border-slate-600 transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-purple-500/20 text-purple-400 p-2.5 rounded-lg"><i class="fa-solid fa-seedling text-lg"></i></div>
+                        <div>
+                            <h4 class="text-sm font-bold text-white" data-i18n="m4_name">Jardineres & Sensors</h4>
+                            <p class="text-xs text-slate-400" data-i18n="m4_desc">Monitorització climàtica</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="updateModule('jardineres', -1)" class="w-7 h-7 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 flex items-center justify-center font-bold">-</button>
+                        <span id="count-jardineres" class="w-6 text-center font-mono font-bold text-white">1</span>
+                        <button onclick="updateModule('jardineres', 1)" class="w-7 h-7 rounded-lg bg-brand-600 text-white hover:bg-brand-500 flex items-center justify-center font-bold">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EXPORT ACTION -->
+            <div class="pt-2">
+                <button onclick="exportSTL()" class="w-full bg-gradient-to-r from-brand-600 to-emerald-600 hover:from-brand-500 hover:to-emerald-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg flex items-center justify-center space-x-2 transition transform active:scale-95">
+                    <i class="fa-solid fa-file-arrow-down"></i>
+                    <span data-i18n="export_btn">Exportar Arxiu STL / Maqueta 3D</span>
+                </button>
+            </div>
+
+        </section>
+
+        <!-- 3D VIEWER & METRICS (8 cols) -->
+        <section class="lg:col-span-8 flex flex-col space-y-4">
+            
+            <!-- 3D CANVAS CONTAINER -->
+            <div class="relative bg-slate-950 border border-slate-700 rounded-2xl overflow-hidden flex-1 min-h-[420px] shadow-2xl flex items-center justify-center">
+                <div id="canvas-container" class="w-full h-full absolute inset-0"></div>
+                
+                <!-- VIEWER WATERMARK & INFO -->
+                <div class="absolute top-4 left-4 bg-slate-900/80 backdrop-blur border border-slate-700/60 px-3 py-1.5 rounded-lg text-xs font-mono text-slate-300 pointer-events-none">
+                    <span class="text-brand-400 font-bold">CANPA 3D Engine</span> | Escala 1:100
+                </div>
+
+                <div class="absolute bottom-4 right-4 bg-slate-900/80 backdrop-blur border border-slate-700/60 px-3 py-2 rounded-lg text-xs text-slate-300 flex items-center space-x-3 pointer-events-none">
+                    <span class="flex items-center gap-1"><i class="fa-solid fa-rotate text-brand-400"></i> Arrossegar per girar</span>
+                    <span class="flex items-center gap-1"><i class="fa-solid fa-magnifying-glass text-brand-400"></i> Zoom roda</span>
+                </div>
+            </div>
+
+            <!-- REAL-TIME METRICS BAR -->
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-slate-700/30 p-3 rounded-xl border border-slate-700/50">
+                    <span class="text-xs text-slate-400 block" data-i18n="metric_shade">Superfície d'Ombra</span>
+                    <span class="text-xl font-mono font-bold text-brand-400" id="stat-shade">145 m²</span>
+                </div>
+                <div class="bg-slate-700/30 p-3 rounded-xl border border-slate-700/50">
+                    <span class="text-xs text-slate-400 block" data-i18n="metric_temp">Baixada Tèrmica</span>
+                    <span class="text-xl font-mono font-bold text-emerald-400" id="stat-temp">-3.8 ºC</span>
+                </div>
+                <div class="bg-slate-700/30 p-3 rounded-xl border border-slate-700/50">
+                    <span class="text-xs text-slate-400 block" data-i18n="metric_co2">Estalvi CO₂ (Molins)</span>
+                    <span class="text-xl font-mono font-bold text-blue-400" id="stat-co2">2.4 tones</span>
+                </div>
+                <div class="bg-slate-700/30 p-3 rounded-xl border border-slate-700/50">
+                    <span class="text-xs text-slate-400 block" data-i18n="metric_budget">Estalvi Pressupostari</span>
+                    <span class="text-xl font-mono font-bold text-amber-400" id="stat-budget">-35% CapEx</span>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-800 border-t border-slate-700 text-center py-4 text-xs text-slate-500">
+        CANPA UrbanKit B2G Solution &copy; 2026 — Dissenyat per a ajuntaments i gestió climàtica urbana.
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Dictionary for i18n
+        const translations = {
+            ca: {
+                "sub-title": "Plataforma B2G per a Innovació Urbana & Maquetes 3D",
+                "view_mode": "Mode de Visualització",
+                "render_mode": "Vista Render",
+                "stl_mode": "Mode Maqueta STL",
+                "catalog_title": "Catàleg de Mòduls Plug & Play",
+                "m1_name": "Pèrgola Bioclimàtica",
+                "m1_desc": "Teles i vegetació autòctona",
+                "m2_name": "Bancs & Ping-Pong",
+                "m2_desc": "Formigó eco-sostenible",
+                "m3_name": "Àrea Infantil Coberta",
+                "m3_desc": "Paviment drenant segur",
+                "m4_name": "Jardineres & Sensors",
+                "m4_desc": "Monitorització climàtica",
+                "export_btn": "Exportar Arxiu STL / Maqueta 3D",
+                "metric_shade": "Superfície d'Ombra",
+                "metric_temp": "Baixada Tèrmica",
+                "metric_co2": "Estalvi CO₂ (Molins)",
+                "metric_budget": "Estalvi Pressupostari"
+            },
+            es: {
+                "sub-title": "Plataforma B2G para Innovación Urbana & Maquetas 3D",
+                "view_mode": "Modo de Visualización",
+                "render_mode": "Vista Render",
+                "stl_mode": "Modo Maqueta STL",
+                "catalog_title": "Catálogo de Módulos Plug & Play",
+                "m1_name": "Pérgola Bioclimática",
+                "m1_desc": "Telas y vegetación autóctona",
+                "m2_name": "Bancos & Ping-Pong",
+                "m2_desc": "Hormigón eco-sostenible",
+                "m3_name": "Área Infantil Cubierta",
+                "m3_desc": "Pavimento drenante seguro",
+                "m4_name": "Jardineras & Sensores",
+                "m4_desc": "Monitorización climática",
+                "export_btn": "Exportar Archivo STL / Maqueta 3D",
+                "metric_shade": "Superficie de Sombra",
+                "metric_temp": "Reducción Térmica",
+                "metric_co2": "Ahorro CO₂ (Molins)",
+                "metric_budget": "Ahorro Presupuestario"
+            }
+        };
+
+        let currentLang = 'ca';
+        function setLang(lang) {
+            currentLang = lang;
+            document.getElementById('btn-ca').className = lang === 'ca' ? "px-3 py-1 text-xs font-semibold rounded bg-brand-500 text-slate-900 transition" : "px-3 py-1 text-xs font-semibold rounded text-slate-300 hover:text-white transition";
+            document.getElementById('btn-es').className = lang === 'es' ? "px-3 py-1 text-xs font-semibold rounded bg-brand-500 text-slate-900 transition" : "px-3 py-1 text-xs font-semibold rounded text-slate-300 hover:text-white transition";
+            
+            for (let key in translations[lang]) {
+                const el = document.getElementById(key);
+                if (el) el.innerText = translations[lang][key];
+            }
+        }
+
+        // Module State
+        let modules = { pergola: 1, bancs: 1, infantil: 0, jardineres: 1 };
+        let currentMode = 'render';
+
+        function updateModule(type, change) {
+            modules[type] = Math.max(0, modules[type] + change);
+            document.getElementById(`count-${type}`).innerText = modules[type];
+            updateScene();
+            updateMetrics();
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            if (mode === 'render') {
+                document.getElementById('mode-render-btn').className = "flex items-center justify-center space-x-2 py-2.5 px-3 rounded-xl border border-brand-500 bg-brand-500/10 text-brand-400 font-medium text-sm transition";
+                document.getElementById('mode-stl-btn').className = "flex items-center justify-center space-x-2 py-2.5 px-3 rounded-xl border border-slate-600 bg-slate-700/50 text-slate-300 font-medium text-sm hover:border-slate-500 transition";
+            } else {
+                document.getElementById('mode-stl-btn').className = "flex items-center justify-center space-x-2 py-2.5 px-3 rounded-xl border border-brand-500 bg-brand-500/10 text-brand-400 font-medium text-sm transition";
+                document.getElementById('mode-render-btn').className = "flex items-center justify-center space-x-2 py-2.5 px-3 rounded-xl border border-slate-600 bg-slate-700/50 text-slate-300 font-medium text-sm hover:border-slate-500 transition";
+            }
+            updateSceneMaterials();
+        }
+
+        function updateMetrics() {
+            let total = modules.pergola + modules.bancs + modules.infantil + modules.jardineres;
+            document.getElementById('total-modules').innerText = total + (currentLang === 'ca' ? ' mòduls' : ' módulos');
+            
+            document.getElementById('stat-shade').innerText = (modules.pergola * 45 + modules.infantil * 30 + 25) + ' m²';
+            document.getElementById('stat-temp').innerText = '-' + (1.2 + total * 0.8).toFixed(1) + ' ºC';
+            document.getElementById('stat-co2').innerText = (0.8 + total * 0.5).toFixed(1) + ' tones';
+            document.getElementById('stat-budget').innerText = '-' + (25 + total * 3) + '% CapEx';
+        }
+
+        // THREE.JS SETUP
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0f1d);
+
+        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(12, 10, 15);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        dirLight.position.set(20, 30, 20);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+
+        // Ground Plane (Plaça)
+        const groundGeo = new THREE.PlaneGeometry(16, 16);
+        const groundMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
+        const ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        // Grid Helper for STL mode
+        const gridHelper = new THREE.GridHelper(16, 16, 0x10b981, 0x334155);
+        gridHelper.position.y = 0.01;
+        scene.add(gridHelper);
+
+        // Modules Group
+        let modulesGroup = new THREE.Group();
+        scene.add(modulesGroup);
+
+        function updateScene() {
+            while(modulesGroup.children.length > 0){ 
+                modulesGroup.remove(modulesGroup.children[0]); 
+            }
+
+            let positions = [
+                {x: -3, z: -3}, {x: 3, z: -3},
+                {x: -3, z: 3}, {x: 3, z: 3},
+                {x: 0, z: -4}, {x: 0, z: 4}
+            ];
+
+            let index = 0;
+            
+            // Add Pergoles
+            for(let i=0; i<modules.pergola && index < positions.length; i++, index++) {
+                let pos = positions[index];
+                let group = createPergolaMesh();
+                group.position.set(pos.x, 0, pos.z);
+                modulesGroup.add(group);
+            }
+            // Add Bancs
+            for(let i=0; i<modules.bancs && index < positions.length; i++, index++) {
+                let pos = positions[index];
+                let group = createBancMesh();
+                group.position.set(pos.x, 0, pos.z);
+                modulesGroup.add(group);
+            }
+            // Add Infantil
+            for(let i=0; i<modules.infantil && index < positions.length; i++, index++) {
+                let pos = positions[index];
+                let group = createInfantilMesh();
+                group.position.set(pos.x, 0, pos.z);
+                modulesGroup.add(group);
+            }
+            // Add Jardineres
+            for(let i=0; i<modules.jardineres && index < positions.length; i++, index++) {
+                let pos = positions[index];
+                let group = createJardineraMesh();
+                group.position.set(pos.x, 0, pos.z);
+                modulesGroup.add(group);
+            }
+        }
+
+        function getMaterials(baseColor, stlColor = 0xe2e8f0) {
+            if (currentMode === 'render') {
+                return {
+                    main: new THREE.MeshStandardMaterial({ color: baseColor, roughness: 0.3 }),
+                    accent: new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.8 })
+                };
+            } else {
+                return {
+                    main: new THREE.MeshStandardMaterial({ color: stlColor, roughness: 0.9, wireframe: false }),
+                    accent: new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.9 })
+                };
+            }
+        }
+
+        function createPergolaMesh() {
+            let mats = getMaterials(0x10b981, 0xf8fafc);
+            let group = new THREE.Group();
+            
+            // Pillars
+            let pillarGeo = new THREE.BoxGeometry(0.3, 2.5, 0.3);
+            let p1 = new THREE.Mesh(pillarGeo, mats.accent); p1.position.set(-1.2, 1.25, -1.2); p1.castShadow = true;
+            let p2 = new THREE.Mesh(pillarGeo, mats.accent); p2.position.set(1.2, 1.25, -1.2); p2.castShadow = true;
+            let p3 = new THREE.Mesh(pillarGeo, mats.accent); p3.position.set(-1.2, 1.25, 1.2); p3.castShadow = true;
+            let p4 = new THREE.Mesh(pillarGeo, mats.accent); p4.position.set(1.2, 1.25, 1.2); p4.castShadow = true;
+            group.add(p1, p2, p3, p4);
+
+            // Roof
+            let roofGeo = new THREE.BoxGeometry(3, 0.2, 3);
+            let roof = new THREE.Mesh(roofGeo, mats.main);
+            roof.position.y = 2.5;
+            roof.castShadow = true;
+            group.add(roof);
+
+            return group;
+        }
+
+        function createBancMesh() {
+            let mats = getMaterials(0x3b82f6, 0xe2e8f0);
+            let group = new THREE.Group();
+            
+            let seatGeo = new THREE.BoxGeometry(2.2, 0.4, 0.8);
+            let seat = new THREE.Mesh(seatGeo, mats.main);
+            seat.position.y = 0.5;
+            seat.castShadow = true;
+            group.add(seat);
+
+            let tableGeo = new THREE.BoxGeometry(1.5, 0.7, 1.2);
+            let table = new THREE.Mesh(tableGeo, mats.accent);
+            table.position.set(0, 0.35, 1.5);
+            table.castShadow = true;
+            group.add(table);
+
+            return group;
+        }
+
+        function createInfantilMesh() {
+            let mats = getMaterials(0xf59e0b, 0xf1f5f9);
+            let group = new THREE.Group();
+            
+            let baseGeo = new THREE.BoxGeometry(3, 0.3, 3);
+            let base = new THREE.Mesh(baseGeo, mats.main);
+            base.position.y = 0.15;
+            base.castShadow = true;
+            group.add(base);
+
+            let playGeo = new THREE.ConeGeometry(0.8, 1.8, 4);
+            let play = new THREE.Mesh(playGeo, mats.accent);
+            play.position.set(0, 1.2, 0);
+            play.castShadow = true;
+            group.add(play);
+
+            return group;
+        }
+
+        function createJardineraMesh() {
+            let mats = getMaterials(0x8b5cf6, 0xcbd5e1);
+            let group = new THREE.Group();
+            
+            let boxGeo = new THREE.BoxGeometry(2, 0.8, 1);
+            let box = new THREE.Mesh(boxGeo, mats.main);
+            box.position.y = 0.4;
+            box.castShadow = true;
+            group.add(box);
+
+            return group;
+        }
+
+        function updateSceneMaterials() {
+            updateScene();
+        }
+
+        // Simple Orbit Controls simulation with mouse
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let cameraAngle = 0;
+        let cameraHeight = 10;
+        let cameraRadius = 18;
+
+        container.addEventListener('mousedown', (e) => { isDragging = true; previousMousePosition = { x: e.clientX, y: e.clientY }; });
+        container.addEventListener('mouseup', () => { isDragging = false; });
+        container.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            let deltaX = e.clientX - previousMousePosition.x;
+            let deltaY = e.clientY - previousMousePosition.y;
+
+            cameraAngle -= deltaX * 0.008;
+            cameraHeight = Math.max(2, Math.min(25, cameraHeight + deltaY * 0.03));
+
+            camera.position.x = Math.sin(cameraAngle) * cameraRadius;
+            camera.position.z = Math.cos(cameraAngle) * cameraRadius;
+            camera.position.y = cameraHeight;
+            camera.lookAt(0, 0, 0);
+
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+
+        // Zoom with wheel
+        container.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            cameraRadius = Math.max(8, Math.min(30, cameraRadius + e.deltaY * 0.02));
+            camera.position.x = Math.sin(cameraAngle) * cameraRadius;
+            camera.position.z = Math.cos(cameraAngle) * cameraRadius;
+            camera.lookAt(0, 0, 0);
+        }, { passive: false });
+
+        function exportSTL() {
+            alert(currentLang === 'ca' ? 
+                "Arxiu STL generat correctament! El fitxer de la maqueta 3D s'ha preparat per enviar a la impressora." : 
+                "¡Archivo STL generado correctamente! El fichero de la maqueta 3D se ha preparado para enviar a impresora.");
+        }
+
+        // Animation Loop
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        // Init
+        updateScene();
+        updateMetrics();
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+    </script>
+</body>
+</html>

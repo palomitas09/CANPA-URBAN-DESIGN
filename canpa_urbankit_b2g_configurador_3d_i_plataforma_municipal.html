@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="CANPA Urban Design">
+    <meta name="copyright" content="© 2026 CANPA Urban Design. Tots els drets reservats.">
+    <meta name="robots" content="noimageindex">
     <title>CANPA UrbanKit | Solucions Modulars i Configurador 3D per a Ajuntaments</title>
     <link rel="icon" type="image/png" href="Logo_CANPA_icono.png">
     <!-- Tailwind CSS -->
@@ -217,6 +220,19 @@
         .gallery-more-btn:hover { background: #15353e; transform: translateY(-1px); }
         .gallery-more-btn.is-ghost { background: transparent; color: #1F4E5B; border: 1px solid #dfe2da; }
         .gallery-more-btn.is-ghost:hover { background: #eceee7; }
+        img { -webkit-user-drag: none; user-select: none; }
+        .wm-badge {
+            position: absolute; z-index: 2; pointer-events: none; font-size: 11px; font-weight: 700; letter-spacing: .03em;
+            color: rgba(255, 255, 255, .92); background: rgba(31, 78, 91, .55); padding: 4px 9px; border-radius: 8px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, .3); backdrop-filter: blur(2px);
+        }
+        .wm-lightbox { right: 1.5rem; bottom: 1.5rem; }
+        .wm-compare { right: .75rem; bottom: .75rem; }
+        .gallery-tile-wm {
+            position: absolute; right: .5rem; bottom: 2.6rem; z-index: 1; pointer-events: none; font-size: 9px; font-weight: 700;
+            color: rgba(255, 255, 255, .85); background: rgba(31, 78, 91, .45); padding: 2px 6px; border-radius: 6px;
+        }
+        .legal-body a { color: #2D5A27; font-weight: 700; text-decoration: underline; }
         .ba-compare { position: relative; aspect-ratio: 1376 / 768; overflow: hidden; user-select: none; }
         .ba-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
         .ba-before { position: absolute; inset: 0; clip-path: inset(0 calc(100% - var(--ba)) 0 0); }
@@ -640,6 +656,7 @@
                     <div class="ba-handle" aria-hidden="true"><span><i class="fa-solid fa-arrows-left-right"></i></span></div>
                     <span class="ba-label left-3" data-i18n="ba_before">Abans</span>
                     <span class="ba-label right-3" data-i18n="ba_after">Després</span>
+                    <span class="wm-badge wm-compare">© CANPA Urban Design</span>
                     <input type="range" min="0" max="100" value="50" class="ba-range" aria-label="Abans / Després"
                         oninput="document.getElementById('ba-compare').style.setProperty('--ba', this.value + '%')">
                 </div>
@@ -678,7 +695,8 @@
                 </button>
             </div>
             <div class="relative p-4 bg-black flex items-center justify-center max-h-[78vh]">
-                <img id="lightbox-img" src="" alt="Render ampliat" class="max-h-[72vh] w-auto object-contain rounded-xl">
+                <img id="lightbox-img" src="" alt="Render ampliat" class="max-h-[72vh] w-auto object-contain rounded-xl" draggable="false">
+                <span class="wm-badge wm-lightbox">© CANPA Urban Design</span>
                 <button id="lightbox-prev" type="button" class="lb-nav hidden left-3" onclick="stepLightbox(-1)" aria-label="Anterior">
                     <i class="fa-solid fa-chevron-left"></i>
                 </button>
@@ -807,7 +825,32 @@
             </div>
             <div data-i18n="footer_copy">Dissenyat per a Ajuntaments i Espais Públics Resilients · Compliment Llei 15/2026</div>
         </div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 pt-5 border-t border-stone-800 flex flex-col sm:flex-row justify-between items-center gap-3 text-[11px]">
+            <p class="text-stone-400 text-center sm:text-left">
+                © 2026 <strong class="text-white">CANPA Urban Design</strong> · <span data-i18n="footer_rights">Tots els drets reservats. Prohibida la reproducció total o parcial dels continguts sense autorització.</span>
+            </p>
+            <button type="button" onclick="openLegal()" class="inline-flex items-center gap-1.5 font-semibold text-terracotta-500 hover:text-white transition-colors cursor-pointer shrink-0">
+                <i class="fa-solid fa-scale-balanced"></i>
+                <span data-i18n="footer_legal">Avís legal i propietat intel·lectual</span>
+            </button>
+        </div>
     </footer>
+
+    <!-- Avís legal i propietat intel·lectual -->
+    <div id="legal-modal" class="hidden fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-sm flex items-center justify-center p-4" onclick="closeLegal()">
+        <div class="max-w-2xl w-full max-h-[85vh] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden" onclick="event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="legal-title">
+            <div class="flex items-center justify-between gap-3 px-6 py-4 border-b border-stone-200">
+                <h4 id="legal-title" class="font-extrabold text-stone-900 text-base sm:text-lg flex items-center gap-2">
+                    <i class="fa-solid fa-copyright text-forest-700"></i>
+                    <span data-i18n="legal_title">Avís legal i propietat intel·lectual</span>
+                </h4>
+                <button type="button" onclick="closeLegal()" class="w-9 h-9 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-900 flex items-center justify-center cursor-pointer" aria-label="Tancar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="legal-body px-6 py-5 overflow-y-auto text-sm text-stone-700 leading-relaxed space-y-3" data-i18n="legal_body"><p><strong>Titular:</strong> CANPA Urban Design.</p><p>Tots els continguts d'aquest lloc web, incloent-hi, sense limitació, els renders, fotografies, dissenys de mobiliari i mòduls urbans, models 3D, arxius STL, maquetes, textos, logotip, marca, identitat gràfica i codi font del configurador, són propietat de CANPA Urban Design o s'utilitzen amb l'autorització dels seus titulars. Estan protegits per la normativa de propietat intel·lectual i industrial (Reial Decret Legislatiu 1/1996, Text refós de la Llei de Propietat Intel·lectual, i Llei 17/2001, de Marques) i pels tractats internacionals aplicables.</p><p>Queda prohibida la reproducció, distribució, comunicació pública, transformació o qualsevol altra forma d'explotació, total o parcial, d'aquests continguts sense l'autorització prèvia i per escrit de CANPA Urban Design. Això inclou fabricar, encarregar o comercialitzar mobiliari o mòduls basats en els dissenys que s'hi mostren.</p><p>El configurador i les maquetes o arxius STL que s'hi generen es poden fer servir únicament per avaluar les propostes de CANPA Urban Design, per a ús intern de l'entitat sol·licitant. No es poden cedir a tercers ni utilitzar per encarregar-ne la fabricació a altres proveïdors.</p><p>Les marques de tercers que s'hi esmenten (com Cementos Molins) pertanyen als seus respectius titulars.</p><p>Qualsevol ús no autoritzat podrà donar lloc a les accions legals corresponents. Per sol·licitar permisos d'ús, escriviu-nos a través del <a href="#contacte" onclick="closeLegal()">formulari de contacte</a>.</p></div>
+        </div>
+    </div>
 
     <!-- SCRIPTS: INTERNACIONALITZACIÓ (CAT/ESP), MOTOR 3D THREE.JS I EXPORTADOR STL REAL -->
     <script>
@@ -922,7 +965,12 @@
                 lbl_notes: "Necessitats de l'espai (Ombra, joc infantil, accessibilitat...)",
                 btn_submit: "Enviar Sol·licitud Tècnica",
                 form_ok: "Sol·licitud registrada! El nostre equip d'arquitectura modular es posarà en contacte amb el vostre ajuntament en menys de 24h.",
-                footer_copy: "Dissenyat per a Ajuntaments i Espais Públics Resilients · Compliment Llei 15/2026"
+                footer_copy: "Dissenyat per a Ajuntaments i Espais Públics Resilients · Compliment Llei 15/2026",
+                footer_rights: "Tots els drets reservats. Prohibida la reproducció total o parcial dels continguts sense autorització.",
+                footer_legal: "Avís legal i propietat intel·lectual",
+                legal_title: "Avís legal i propietat intel·lectual",
+                legal_body: "<p><strong>Titular:</strong> CANPA Urban Design.</p><p>Tots els continguts d'aquest lloc web, incloent-hi, sense limitació, els renders, fotografies, dissenys de mobiliari i mòduls urbans, models 3D, arxius STL, maquetes, textos, logotip, marca, identitat gràfica i codi font del configurador, són propietat de CANPA Urban Design o s'utilitzen amb l'autorització dels seus titulars. Estan protegits per la normativa de propietat intel·lectual i industrial (Reial Decret Legislatiu 1/1996, Text refós de la Llei de Propietat Intel·lectual, i Llei 17/2001, de Marques) i pels tractats internacionals aplicables.</p><p>Queda prohibida la reproducció, distribució, comunicació pública, transformació o qualsevol altra forma d'explotació, total o parcial, d'aquests continguts sense l'autorització prèvia i per escrit de CANPA Urban Design. Això inclou fabricar, encarregar o comercialitzar mobiliari o mòduls basats en els dissenys que s'hi mostren.</p><p>El configurador i les maquetes o arxius STL que s'hi generen es poden fer servir únicament per avaluar les propostes de CANPA Urban Design, per a ús intern de l'entitat sol·licitant. No es poden cedir a tercers ni utilitzar per encarregar-ne la fabricació a altres proveïdors.</p><p>Les marques de tercers que s'hi esmenten (com Cementos Molins) pertanyen als seus respectius titulars.</p><p>Qualsevol ús no autoritzat podrà donar lloc a les accions legals corresponents. Per sol·licitar permisos d'ús, escriviu-nos a través del <a href=\"#contacte\" onclick=\"closeLegal()\">formulari de contacte</a>.</p>",
+                protected_toast: "© Contingut protegit per drets d'autor de CANPA Urban Design"
             },
             es: {
                 nav_sub: "Partner Industrial: Cementos Molins",
@@ -1031,7 +1079,12 @@
                 lbl_notes: "Necesidades del espacio (Sombra, juego infantil, accesibilidad...)",
                 btn_submit: "Enviar Solicitud Técnica",
                 form_ok: "¡Solicitud registrada! Nuestro equipo de arquitectura modular se pondrá en contacto con vuestro ayuntamiento en menos de 24h.",
-                footer_copy: "Diseñado para Ayuntamientos y Espacios Públicos Resilientes · Cumplimiento Ley 15/2026"
+                footer_copy: "Diseñado para Ayuntamientos y Espacios Públicos Resilientes · Cumplimiento Ley 15/2026",
+                footer_rights: "Todos los derechos reservados. Prohibida la reproducción total o parcial de los contenidos sin autorización.",
+                footer_legal: "Aviso legal y propiedad intelectual",
+                legal_title: "Aviso legal y propiedad intelectual",
+                legal_body: "<p><strong>Titular:</strong> CANPA Urban Design.</p><p>Todos los contenidos de este sitio web, incluidos, sin limitación, los renders, fotografías, diseños de mobiliario y módulos urbanos, modelos 3D, archivos STL, maquetas, textos, logotipo, marca, identidad gráfica y código fuente del configurador, son propiedad de CANPA Urban Design o se utilizan con la autorización de sus titulares. Están protegidos por la normativa de propiedad intelectual e industrial (Real Decreto Legislativo 1/1996, Texto refundido de la Ley de Propiedad Intelectual, y Ley 17/2001, de Marcas) y por los tratados internacionales aplicables.</p><p>Queda prohibida la reproducción, distribución, comunicación pública, transformación o cualquier otra forma de explotación, total o parcial, de estos contenidos sin la autorización previa y por escrito de CANPA Urban Design. Esto incluye fabricar, encargar o comercializar mobiliario o módulos basados en los diseños que se muestran.</p><p>El configurador y las maquetas o archivos STL que genera solo pueden utilizarse para evaluar las propuestas de CANPA Urban Design, para uso interno de la entidad solicitante. No pueden cederse a terceros ni utilizarse para encargar su fabricación a otros proveedores.</p><p>Las marcas de terceros mencionadas (como Cementos Molins) pertenecen a sus respectivos titulares.</p><p>Cualquier uso no autorizado podrá dar lugar a las acciones legales correspondientes. Para solicitar permisos de uso, escríbenos a través del <a href=\"#contacte\" onclick=\"closeLegal()\">formulario de contacto</a>.</p>",
+                protected_toast: "© Contenido protegido por derechos de autor de CANPA Urban Design"
             }
         };
 
@@ -1496,6 +1549,7 @@
             img.src = src;
             img.alt = '';
             img.loading = 'lazy';
+            img.draggable = false;
             media.appendChild(img);
 
             if (tag) {
@@ -1504,6 +1558,11 @@
                 chip.textContent = tag;
                 media.appendChild(chip);
             }
+            const wm = document.createElement('span');
+            wm.className = 'gallery-tile-wm';
+            wm.textContent = '© CANPA';
+            media.appendChild(wm);
+
             const caption = document.createElement('span');
             caption.className = 'gallery-tile-caption';
             caption.textContent = title;
@@ -2961,6 +3020,32 @@
         function closeLightbox() {
             document.getElementById('render-lightbox').classList.add('hidden');
         }
+
+        // ---- Avís legal i protecció del contingut ----
+        function openLegal() {
+            document.getElementById('legal-modal').classList.remove('hidden');
+        }
+
+        function closeLegal() {
+            document.getElementById('legal-modal').classList.add('hidden');
+        }
+
+        // Dificulta desar o arrossegar els renders (dissuasori: no evita captures de pantalla)
+        let lastProtectToast = 0;
+        document.addEventListener('contextmenu', (e) => {
+            if (e.target.tagName !== 'IMG') return;
+            e.preventDefault();
+            if (Date.now() - lastProtectToast > 4000) {
+                lastProtectToast = Date.now();
+                showToast(t('protected_toast'));
+            }
+        });
+        document.addEventListener('dragstart', (e) => {
+            if (e.target.tagName === 'IMG') e.preventDefault();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeLegal();
+        });
 
         document.addEventListener('keydown', (e) => {
             if (document.getElementById('render-lightbox').classList.contains('hidden')) return;

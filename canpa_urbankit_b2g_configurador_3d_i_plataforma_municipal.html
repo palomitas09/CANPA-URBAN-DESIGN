@@ -113,12 +113,65 @@
             background: #F4F6F0;
             cursor: zoom-in;
         }
-        .module-thumb { display: flex; }
+        .module-thumb { display: flex; position: relative; }
         .module-thumb button { flex: 1; min-width: 0; height: 100%; overflow: hidden; cursor: zoom-in; }
-        .module-thumb.is-split button + button { border-left: 2px solid #fff; }
         .module-thumb button:focus-visible { outline: 2px solid #F4A261; outline-offset: -2px; }
         .module-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s; }
         .module-thumb button:hover img { transform: scale(1.12); }
+        .lb-nav {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            width: 40px; height: 40px; border-radius: 9999px; cursor: pointer;
+            background: rgba(28, 25, 23, .75); color: #fff; display: flex; align-items: center; justify-content: center;
+        }
+        .lb-nav:hover { background: rgba(28, 25, 23, .95); }
+        .module-renders { margin-top: .625rem; padding-top: .5rem; border-top: 1px dashed #dfe2da; }
+        .module-renders-label { display: inline-flex; align-items: center; gap: .3rem; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #7b807c; }
+        .module-renders-row { display: flex; gap: .375rem; margin-top: .375rem; overflow-x: auto; padding-bottom: 2px; }
+        .module-render { flex-shrink: 0; width: 3rem; height: 3rem; border-radius: .6rem; overflow: hidden; border: 1px solid #dfe2da; background: #F4F6F0; cursor: zoom-in; transition: transform .2s, border-color .2s; }
+        .module-render:hover { transform: translateY(-2px); border-color: #2D5A27; }
+        .module-render:focus-visible { outline: 2px solid #F4A261; outline-offset: 1px; }
+        .module-render img { width: 100%; height: 100%; object-fit: cover; }
+        .variant-list { margin-top: .625rem; padding-top: .5rem; border-top: 1px dashed #dfe2da; display: flex; flex-direction: column; gap: .375rem; }
+        .variant-row { display: flex; align-items: center; gap: .5rem; padding: .25rem .375rem .25rem .25rem; border-radius: .75rem; border: 1px solid transparent; transition: background-color .2s, border-color .2s; }
+        .variant-row.is-on { background: #eef3ec; border-color: #dbe7d7; }
+        .variant-thumb { flex-shrink: 0; width: 2.5rem; height: 2.5rem; border-radius: .55rem; overflow: hidden; border: 1px solid #dfe2da; background: #F4F6F0; display: flex; cursor: zoom-in; }
+        .variant-thumb img { flex: 1; min-width: 0; height: 100%; object-fit: cover; transition: transform .25s; }
+        .variant-thumb.is-split img + img { border-left: 1.5px solid #fff; }
+        .variant-thumb:hover img { transform: scale(1.1); }
+        .variant-thumb:focus-visible { outline: 2px solid #F4A261; outline-offset: 1px; }
+        .variant-thumb-icon { align-items: center; justify-content: center; color: #2D5A27; font-size: 15px; cursor: default; }
+        .variant-name { flex: 1; min-width: 0; font-size: 11px; line-height: 1.25; font-weight: 600; color: #3f5a60; }
+        .variant-row.is-on .variant-name { color: #1F4E5B; }
+        .variant-stepper { flex-shrink: 0; display: inline-flex; align-items: center; gap: 2px; background: #fff; border: 1px solid #dfe2da; border-radius: 999px; padding: 2px; }
+        .variant-btn { width: 24px; height: 24px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #1F4E5B; background: #eceee7; cursor: pointer; transition: background-color .15s, transform .1s; }
+        .variant-btn:hover:not(:disabled) { background: #dbe7d7; }
+        .variant-btn:active:not(:disabled) { transform: scale(.9); }
+        .variant-btn-plus { background: #2D5A27; color: #fff; }
+        .variant-btn-plus:hover:not(:disabled) { background: #244a20; }
+        .variant-btn:disabled { opacity: .35; cursor: not-allowed; }
+        .variant-btn:focus-visible { outline: 2px solid #F4A261; outline-offset: 1px; }
+        .variant-value { min-width: 1.4rem; text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 13px; color: #1F4E5B; }
+        .variant-total { display: flex; align-items: baseline; gap: .375rem; padding: .375rem .75rem; border-radius: .875rem; background: #eceee7; border: 1px solid #dfe2da; }
+        .variant-total span { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #7b807c; }
+        .qty-segments.is-readonly .qty-seg { cursor: default; pointer-events: none; }
+        .module-render-wrap { position: relative; flex-shrink: 0; }
+        .module-render { position: relative; cursor: pointer; }
+        .module-render.is-selected { border: 2px solid #2D5A27; box-shadow: 0 0 0 3px rgba(45, 90, 39, .18); }
+        .module-render.is-selected::after {
+            content: "\2713"; position: absolute; left: 3px; bottom: 3px; width: 15px; height: 15px; border-radius: 999px;
+            background: #2D5A27; color: #fff; font-size: 9px; font-weight: 800; line-height: 15px; text-align: center;
+        }
+        .module-render-mix { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #3f5a60; font-size: 13px; }
+        .module-render-mix span { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
+        .module-render-mix.is-selected { color: #2D5A27; background: #eef3ec; }
+        .module-render-mix.is-selected::after { display: none; }
+        .module-render-zoom {
+            position: absolute; top: 2px; right: 2px; width: 17px; height: 17px; border-radius: 6px;
+            background: rgba(31, 78, 91, .85); color: #fff; font-size: 8px; display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity .15s; cursor: zoom-in;
+        }
+        .module-render-wrap:hover .module-render-zoom, .module-render-zoom:focus-visible { opacity: 1; }
+        @media (hover: none) { .module-render-zoom { opacity: 1; } }
         .ba-compare { position: relative; aspect-ratio: 1376 / 768; overflow: hidden; user-select: none; }
         .ba-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
         .ba-before { position: absolute; inset: 0; clip-path: inset(0 calc(100% - var(--ba)) 0 0); }
@@ -575,12 +628,19 @@
         <div class="max-w-5xl w-full bg-stone-900 border border-stone-700 rounded-3xl overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
             <div class="flex items-center justify-between px-6 py-4 border-b border-stone-800">
                 <h4 id="lightbox-title" class="font-bold text-white text-sm sm:text-base truncate">Render CANPA UrbanKit</h4>
+                <span id="lightbox-counter" class="hidden ml-auto mr-3 text-xs font-mono text-stone-400 shrink-0"></span>
                 <button onclick="closeLightbox()" class="w-9 h-9 rounded-xl bg-stone-800 hover:bg-stone-700 text-white flex items-center justify-center cursor-pointer">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-            <div class="p-4 bg-black flex items-center justify-center max-h-[78vh]">
+            <div class="relative p-4 bg-black flex items-center justify-center max-h-[78vh]">
                 <img id="lightbox-img" src="" alt="Render ampliat" class="max-h-[72vh] w-auto object-contain rounded-xl">
+                <button id="lightbox-prev" type="button" class="lb-nav hidden left-3" onclick="stepLightbox(-1)" aria-label="Anterior">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button id="lightbox-next" type="button" class="lb-nav hidden right-3" onclick="stepLightbox(1)" aria-label="Següent">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -775,11 +835,16 @@
                 calc_cost: "Estalvi vs. Obra Civil",
                 calc_cost_sub: "Muntatge ràpid 48h",
                 qty_max: "màx.",
+                mod_renders: "dissenys",
+                variant_qty_hint: "unitats de cada un",
+                variant_total: "Total",
+                variant_zoom: "Ampliar",
                 render_strip_label: "Disseny de referència",
                 model_own: "Model 3D propi",
                 model_remove: "Treure",
                 gal_card_sub: "CANPA UrbanKit · Disseny propi",
                 gal_general: "Proposta general",
+                gal_maqueta: "Maqueta 3D",
                 proc_tag: "METODOLOGIA DE TREBALL B2G",
                 proc_title: "Com implementem CANPA UrbanKit al teu municipi",
                 proc_desc: "Un procés àgil pensat per als serveis tècnics municipals, regidories d'urbanisme i transició ecològica.",
@@ -868,11 +933,16 @@
                 calc_cost: "Ahorro vs. Obra Civil",
                 calc_cost_sub: "Montaje rápido 48h",
                 qty_max: "máx.",
+                mod_renders: "diseños",
+                variant_qty_hint: "unidades de cada uno",
+                variant_total: "Total",
+                variant_zoom: "Ampliar",
                 render_strip_label: "Diseño de referencia",
                 model_own: "Modelo 3D propio",
                 model_remove: "Quitar",
                 gal_card_sub: "CANPA UrbanKit · Diseño propio",
                 gal_general: "Propuesta general",
+                gal_maqueta: "Maqueta 3D",
                 proc_tag: "METODOLOGÍA DE TRABAJO B2G",
                 proc_title: "Cómo implementamos CANPA UrbanKit en tu municipio",
                 proc_desc: "Un proceso ágil pensado para los servicios técnicos municipales, concejalías de urbanismo y transición ecológica.",
@@ -942,6 +1012,13 @@
         };
 
         let renderMode = 'realistic'; // 'realistic' | 'stl'
+        // Unitats de cada disseny dins del mòdul (la suma és el total del mòdul)
+        const DEFAULT_VARIANT_COUNTS = {
+            pergola: { toldo: 1, volta: 1, carrer: 0 },
+            bench: { picnic: 1, rodona: 1, bancU: 0, bancZ: 0, pingpong: 0 },
+            green: { combo: 2, fanal: 0, jardinera: 0 }
+        };
+        let variantCounts = JSON.parse(JSON.stringify(DEFAULT_VARIANT_COUNTS));
 
         // ------------------------------------------------------------------
         // CATÀLEG DE MÒDULS
@@ -984,32 +1061,100 @@
             return (translations[currentLang] && translations[currentLang][key]) || key;
         }
 
+        // Tots els renders d'un mòdul: la imatge pròpia del catàleg + els de la galeria amb el mateix `module`
+        function moduleRenders(m) {
+            const gallery = (typeof GALLERY_RENDERS !== 'undefined') ? GALLERY_RENDERS : [];
+            const out = [];
+            [].concat(m.image || []).concat(gallery.filter(r => r.module === m.key).map(r => r.src)).forEach(src => {
+                if (out.some(r => r.src === src)) return;
+                const g = gallery.find(r => r.src === src);
+                out.push({ src, title: g ? g[currentLang] : t('mod_' + m.key + '_name') });
+            });
+            return out;
+        }
+
         function moduleImages(m) {
-            return [].concat(m.image || []);
+            return moduleRenders(m).map(r => r.src);
         }
 
         function openModuleImage(key, index) {
             const mod = MODULE_CATALOG.find(m => m.key === key);
-            const src = moduleImages(mod)[index];
-            if (src) openLightbox(src, t('mod_' + key + '_name'));
+            const renders = moduleRenders(mod);
+            if (renders[index]) openLightboxSet(renders, index);
+        }
+
+        function variantTotal(key) {
+            return Object.values(variantCounts[key] || {}).reduce((a, b) => a + b, 0);
+        }
+
+        function changeVariantCount(key, id, delta) {
+            const mod = MODULE_CATALOG.find(m => m.key === key);
+            const now = variantCounts[key][id] || 0;
+            if (delta > 0 && variantTotal(key) >= mod.max) return;
+            const next = Math.max(0, now + delta);
+            if (next === now) return;
+            variantCounts[key][id] = next;
+            modulesState[key] = variantTotal(key);
+            syncModuleUI(key);
+            const out = document.getElementById(`vqty-${key}-${id}`);
+            if (out) { out.classList.remove('qty-bump'); void out.offsetWidth; out.classList.add('qty-bump'); }
+            rebuild3DScene();
+            updateMetrics();
+        }
+
+        function variantThumbs(v) {
+            return [].concat(v.thumb || []);
+        }
+
+        function variantLabel(v) {
+            if (v.label) return v.label[currentLang];
+            const g = GALLERY_RENDERS.find(r => r.src === v.thumb);
+            return g ? g[currentLang] : v.id;
         }
 
         function renderModuleList() {
             const list = document.getElementById('module-list');
             if (!list) return;
             list.innerHTML = MODULE_CATALOG.map(m => {
-                const segments = Array.from({ length: m.max }, (_, i) =>
-                    `<button type="button" class="qty-seg" data-type="${m.key}" data-value="${i + 1}"
+                const segmentsClickable = !(MODULE_VARIANTS[m.key] && MODULE_VARIANTS[m.key].items.length > 1);
+                const segments = Array.from({ length: m.max }, (_, i) => segmentsClickable
+                    ? `<button type="button" class="qty-seg" data-type="${m.key}" data-value="${i + 1}"
                         onclick="setModuleCount('${m.key}', ${i + 1})"
-                        aria-label="${i + 1}"></button>`).join('');
+                        aria-label="${i + 1}"></button>`
+                    : `<span class="qty-seg" data-type="${m.key}" data-value="${i + 1}"></span>`).join('');
+                const renders = moduleRenders(m);
+                const variants = (MODULE_VARIANTS[m.key] && MODULE_VARIANTS[m.key].items) || [];
+                const hasVariants = variants.length > 1;
+                const variantRows = hasVariants
+                    ? `<div class="variant-list">
+                           <span class="module-renders-label"><i class="fa-regular fa-images"></i> ${variants.length} ${t('mod_renders')} · ${t('variant_qty_hint')}</span>
+                           ${variants.map(v => {
+                               const thumbs = variantThumbs(v);
+                               const zoomIndex = Math.max(0, renders.findIndex(r => r.src === thumbs[0]));
+                               return `<div class="variant-row" id="vrow-${m.key}-${v.id}">
+                                   ${thumbs.length
+                                       ? `<button type="button" class="variant-thumb ${thumbs.length > 1 ? 'is-split' : ''}" onclick="openModuleImage('${m.key}', ${zoomIndex})" title="${t('variant_zoom')}" aria-label="${t('variant_zoom')}: ${variantLabel(v)}">
+                                              ${thumbs.map(src => `<img src="${src}" alt="" loading="lazy">`).join('')}
+                                          </button>`
+                                       : `<span class="variant-thumb variant-thumb-icon"><i class="fa-solid ${v.icon}"></i></span>`}
+                                   <span class="variant-name">${variantLabel(v)}</span>
+                                   <div class="variant-stepper" role="group" aria-label="${variantLabel(v)}">
+                                       <button type="button" class="variant-btn" id="vdec-${m.key}-${v.id}" onclick="changeVariantCount('${m.key}', '${v.id}', -1)" aria-label="-1"><i class="fa-solid fa-minus"></i></button>
+                                       <output id="vqty-${m.key}-${v.id}" class="variant-value" aria-live="polite">0</output>
+                                       <button type="button" class="variant-btn variant-btn-plus" id="vinc-${m.key}-${v.id}" onclick="changeVariantCount('${m.key}', '${v.id}', 1)" aria-label="+1"><i class="fa-solid fa-plus"></i></button>
+                                   </div>
+                               </div>`;
+                           }).join('')}
+                       </div>`
+                    : '';
                 return `
                 <div class="module-card" id="card-${m.key}" role="listitem">
                     <div class="flex items-start gap-3">
-                        ${moduleImages(m).length
-                            ? `<div class="module-thumb ${moduleImages(m).length > 1 ? 'is-split' : ''}">
-                                   ${moduleImages(m).map((src, i) => `<button type="button" onclick="openModuleImage('${m.key}', ${i})" aria-label="${t('mod_' + m.key + '_name')} (${i + 1})">
-                                       <img src="${src}" alt="" loading="lazy">
-                                   </button>`).join('')}
+                        ${renders.length
+                            ? `<div class="module-thumb">
+                                   <button type="button" onclick="openModuleImage('${m.key}', 0)" aria-label="${renders[0].title}">
+                                       <img src="${renders[0].src}" alt="" loading="lazy">
+                                   </button>
                                </div>`
                             : `<div class="w-14 h-14 rounded-xl ${TONE_CLASSES[m.tone]} flex items-center justify-center shrink-0 text-lg">
                                    <i class="fa-solid ${m.icon}"></i>
@@ -1032,8 +1177,11 @@
                         </div>
                     </div>
 
+                    ${variantRows}
                     <div class="mt-3 flex items-center gap-3">
-                        <div class="qty-stepper" role="group" aria-label="${t('mod_' + m.key + '_name')}">
+                        ${hasVariants
+                            ? `<div class="variant-total"><span>${t('variant_total')}</span><output id="qty-${m.key}" class="qty-value" aria-live="polite">0</output></div>`
+                            : `<div class="qty-stepper" role="group" aria-label="${t('mod_' + m.key + '_name')}">
                             <button type="button" class="qty-btn" id="dec-${m.key}" onclick="changeModuleCount('${m.key}', -1)" aria-label="-1">
                                 <i class="fa-solid fa-minus"></i>
                             </button>
@@ -1041,9 +1189,9 @@
                             <button type="button" class="qty-btn qty-btn-plus" id="inc-${m.key}" onclick="changeModuleCount('${m.key}', 1)" aria-label="+1">
                                 <i class="fa-solid fa-plus"></i>
                             </button>
-                        </div>
+                        </div>`}
                         <div class="flex-1 min-w-0">
-                            <div class="qty-segments">${segments}</div>
+                            <div class="qty-segments ${hasVariants ? 'is-readonly' : ''}">${segments}</div>
                             <div class="mt-1 text-[10px] font-mono text-stone-400">${t('qty_max')} ${m.max}</div>
                         </div>
                     </div>
@@ -1063,8 +1211,20 @@
                 void qtyEl.offsetWidth;
                 qtyEl.classList.add('qty-bump');
             }
-            document.getElementById(`dec-${type}`).disabled = qty <= 0;
-            document.getElementById(`inc-${type}`).disabled = qty >= mod.max;
+            const dec = document.getElementById(`dec-${type}`);
+            const inc = document.getElementById(`inc-${type}`);
+            if (dec) dec.disabled = qty <= 0;
+            if (inc) inc.disabled = qty >= mod.max;
+            if (variantCounts[type]) {
+                Object.entries(variantCounts[type]).forEach(([id, n]) => {
+                    const out = document.getElementById(`vqty-${type}-${id}`);
+                    if (!out) return;
+                    out.textContent = n;
+                    document.getElementById(`vdec-${type}-${id}`).disabled = n <= 0;
+                    document.getElementById(`vinc-${type}-${id}`).disabled = qty >= mod.max;
+                    document.getElementById(`vrow-${type}-${id}`).classList.toggle('is-on', n > 0);
+                });
+            }
             document.getElementById(`card-${type}`).classList.toggle('is-active', qty > 0);
             document.querySelectorAll(`.qty-seg[data-type="${type}"]`).forEach(seg => {
                 seg.classList.toggle('is-on', Number(seg.dataset.value) <= qty);
@@ -1164,7 +1324,14 @@
             try {
                 const object = await readModelFile(file);
                 moduleModels[key] = { object: normalizeModel(object, mod.footprint), name: file.name };
-                if (modulesState[key] === 0) modulesState[key] = 1;
+                if (modulesState[key] === 0) {
+                    if (variantCounts[key]) {
+                        variantCounts[key][MODULE_VARIANTS[key].items[0].id] = 1;
+                        modulesState[key] = variantTotal(key);
+                    } else {
+                        modulesState[key] = 1;
+                    }
+                }
                 renderModuleList();
                 rebuild3DScene();
                 updateMetrics();
@@ -1195,6 +1362,10 @@
               ca: 'Pèrgola de formigó amb trepadores i nebulització', es: 'Pérgola de hormigón con trepadoras y nebulización' },
             { src: 'CubiertaAgua_Design.png', module: 'pergola',
               ca: "Coberta de volta amb captació d'aigua de pluja", es: 'Cubierta de bóveda con captación de agua de lluvia' },
+            { src: 'Modulo-CubiertaCalle_VistaDron.jfif', module: 'pergola',
+              ca: 'Coberta modular de carrer: vista de dron', es: 'Cubierta modular de calle: vista de dron' },
+            { src: 'Modulo-CubiertaCalle_VistaInferior.jfif', module: 'pergola',
+              ca: 'Coberta modular de carrer: vista inferior', es: 'Cubierta modular de calle: vista inferior' },
             { src: 'BancoLuminoso-U_Design.jfif', module: 'bench',
               ca: 'Banc lluminós en U', es: 'Banco luminoso en U' },
             { src: 'BancoLuminoso-Z_Design.jfif', module: 'bench',
@@ -1209,8 +1380,16 @@
               ca: 'Fanal corbat de formigó amb nebulització', es: 'Farola curva de hormigón con nebulización' },
             { src: 'PlazaAtardecer_Design.png', module: null,
               ca: 'Plaça al capvespre: fanals, bancs lluminosos i jardineres', es: 'Plaza al atardecer: farolas, bancos luminosos y jardineras' },
-            { src: 'ParqueMolins_VistaDron_After.png', module: 'play',
-              ca: 'Pèrgola vegetal sobre el parc infantil (proposta)', es: 'Pérgola vegetal sobre el parque infantil (propuesta)' },
+            { src: 'Parc_Molins_VistaDron_After_v2.png', module: 'play',
+              ca: 'Pèrgola vegetal sobre el parc infantil, amb seients i taules (proposta)', es: 'Pérgola vegetal sobre el parque infantil, con asientos y mesas (propuesta)' },
+            { src: 'maqueta_3d/parque_molins_P1S/vista_montada_1.png', module: null, tag: 'gal_maqueta',
+              ca: 'Maqueta 3D Parc Molins 1:150 (impressió per peces de colors)', es: 'Maqueta 3D Parque Molins 1:150 (impresión por piezas de colores)' },
+            { src: 'maqueta_3d/parque_molins_P1S/vista_montada_2.png', module: null, tag: 'gal_maqueta',
+              ca: 'Maqueta 3D Parc Molins: vista lateral', es: 'Maqueta 3D Parque Molins: vista lateral' },
+            { src: 'maqueta_3d/parque_molins_P1S/vista_base_encastrable.png', module: null, tag: 'gal_maqueta',
+              ca: 'Maqueta 3D: base encastable amb peces de color', es: 'Maqueta 3D: base encastrable con piezas de color' },
+            { src: 'maqueta_3d/PARQUE_MOLINS_listo_para_imprimir_1-200.png', module: null, tag: 'gal_maqueta',
+              ca: 'Maqueta 1:200 en una sola peça, sense suports', es: 'Maqueta 1:200 en una sola pieza, sin soportes' },
             { src: 'ParqueMolins_VistaDron_Before.jfif', module: null,
               ca: 'Parc infantil: estat actual sense ombra', es: 'Parque infantil: estado actual sin sombra' },
             { src: 'render.png', module: null,
@@ -1278,13 +1457,14 @@
             grid.querySelectorAll('.is-preloaded').forEach(el => el.remove());
             const anchor = grid.firstElementChild;
             GALLERY_RENDERS.forEach(r => {
-                const tag = r.module ? t('mod_' + r.module + '_name') : t('gal_general');
+                const tag = r.tag ? t(r.tag) : (r.module ? t('mod_' + r.module + '_name') : t('gal_general'));
                 grid.insertBefore(createGalleryCard(r.src, r[currentLang], tag, true), anchor);
             });
         }
 
         function resetScene() {
             modulesState = { pergola: 2, bench: 2, play: 1, green: 2 };
+            variantCounts = JSON.parse(JSON.stringify(DEFAULT_VARIANT_COUNTS));
             MODULE_CATALOG.forEach(m => syncModuleUI(m.key, false));
             removeCustomModel();
             removeCustomBackdrop();
@@ -1582,7 +1762,7 @@
             ];
             for (let i = 0; i < modulesState.pergola; i++) {
                 const pos = pergolaPositions[i];
-                const pGroup = buildModule('pergola', mats, createPergolaMesh);
+                const pGroup = buildModule('pergola', mats, moduleFactory('pergola', i));
                 pGroup.position.set(pos.x, 0, pos.z);
                 plazaGroup.add(pGroup);
             }
@@ -1597,7 +1777,7 @@
             ];
             for (let i = 0; i < modulesState.bench; i++) {
                 const pos = benchPositions[i];
-                const bGroup = buildModule('bench', mats, (m) => createBenchVariant(m, i));
+                const bGroup = buildModule('bench', mats, moduleFactory('bench', i));
                 if (pos.z > 0) bGroup.rotation.y = Math.PI;
                 bGroup.position.set(pos.x, 0, pos.z);
                 plazaGroup.add(bGroup);
@@ -1610,7 +1790,7 @@
             ];
             for (let i = 0; i < modulesState.play; i++) {
                 const pos = playPositions[i];
-                const playGroup = buildModule('play', mats, createPlaygroundMesh);
+                const playGroup = buildModule('play', mats, moduleFactory('play', i));
                 playGroup.position.set(pos.x, 0, pos.z);
                 plazaGroup.add(playGroup);
             }
@@ -1626,7 +1806,7 @@
             ];
             for (let i = 0; i < modulesState.green; i++) {
                 const pos = greenPositions[i];
-                const gGroup = buildModule('green', mats, createPlanterAndLampMesh);
+                const gGroup = buildModule('green', mats, moduleFactory('green', i));
                 gGroup.position.set(pos.x, 0, pos.z);
                 gGroup.rotation.y = pos.z > 0 ? Math.PI : 0; // el seient mira cap a la plaça
                 plazaGroup.add(gGroup);
@@ -1638,7 +1818,10 @@
         function updateRenderStrip() {
             const strip = document.getElementById('render-strip');
             if (!strip || typeof GALLERY_RENDERS === 'undefined') return;
-            const items = GALLERY_RENDERS.filter(r => r.module && modulesState[r.module] > 0);
+            const items = GALLERY_RENDERS.filter(r => r.module && modulesState[r.module] > 0 && (
+                !variantCounts[r.module] ||
+                MODULE_VARIANTS[r.module].items.some(v => variantCounts[r.module][v.id] > 0 && (v.srcs || []).includes(r.src))
+            ));
             strip.classList.toggle('hidden', renderMode === 'stl' || items.length === 0);
             strip.innerHTML = `<span class="render-strip-label">${t('render_strip_label')}</span>`;
             items.forEach(r => {
@@ -2017,7 +2200,7 @@
         }
 
         // Banc-jardinera amb aromàtiques + fanal corbat (BancosVerdes + Farola)
-        function createPlanterAndLampMesh(mats) {
+        function createPlanterAndLampMesh(mats, withLamp = true) {
             const g = new THREE.Group();
             const rand = seededRandom(7);
 
@@ -2058,11 +2241,184 @@
             }
 
             // Fanal corbat al costat, amb el braç cap a la plaça
+            if (withLamp) {
+                const lamp = createCurvedLamp(mats);
+                lamp.position.set(1.15, 0, -0.35);
+                lamp.rotation.y = -Math.PI / 2;
+                g.add(lamp);
+            }
+            return g;
+        }
+
+        // Només el fanal (disseny "Farola")
+        function createLampOnly(mats) {
+            const g = new THREE.Group();
             const lamp = createCurvedLamp(mats);
-            lamp.position.set(1.15, 0, -0.35);
+            lamp.position.set(0, 0, -0.35);
             lamp.rotation.y = -Math.PI / 2;
             g.add(lamp);
             return g;
+        }
+
+        // Coberta de volta 4x4 m amb captació d'aigua de pluja (disseny "CubiertaAgua")
+        function createVaultPergola(mats) {
+            const g = new THREE.Group();
+            const half = 1.75;
+            [[-half, -half], [half, -half], [-half, half], [half, half]].forEach(([x, z]) => {
+                addBox(g, 0.42, 0.12, 0.42, mats.concreteDark, x, 0.06, z);
+                addBox(g, 0.28, 2.4, 0.28, mats.concrete, x, 1.2, z);
+            });
+            addBox(g, 3.8, 0.3, 0.3, mats.concrete, 0, 2.5, -half);
+            addBox(g, 3.8, 0.3, 0.3, mats.concrete, 0, 2.5, half);
+
+            const vault = new THREE.Mesh(new THREE.CylinderGeometry(1.95, 1.95, 3.9, 32, 1, true, 0, Math.PI), mats.vault);
+            vault.rotation.z = Math.PI / 2;
+            vault.scale.set(0.42, 1, 1);
+            vault.position.set(0, 2.62, 0);
+            vault.castShadow = true;
+            vault.receiveShadow = true;
+            g.add(vault);
+            [-1.95, 1.95].forEach(x => {
+                const arch = new THREE.Mesh(new THREE.TorusGeometry(1.9, 0.09, 8, 32, Math.PI), mats.concrete);
+                arch.rotation.y = Math.PI / 2;
+                arch.scale.set(1, 0.42, 1);
+                arch.position.set(x, 2.62, 0);
+                arch.castShadow = true;
+                g.add(arch);
+            });
+
+            // Canal, baixant i dipòsit de pluvials
+            addBox(g, 3.9, 0.08, 0.14, mats.steel, 0, 2.7, -1.95);
+            addBox(g, 0.1, 2.6, 0.1, mats.steel, 1.85, 1.35, -1.95);
+            const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.7, 16), mats.concreteDark);
+            tank.position.set(1.85, 0.35, -2.3);
+            tank.castShadow = true;
+            g.add(tank);
+            return g;
+        }
+
+        // Coberta modular de carrer: arcs de formigó als quatre costats + volta rebaixada (Modulo-CubiertaCalle)
+        function createArcadeCanopy(mats) {
+            const g = new THREE.Group();
+            const W = 3.9, H = 3.0, T = 0.3, open = 1.55, spring = 1.85, rise = 0.85;
+            const arch = new THREE.Shape();
+            arch.moveTo(-W / 2, 0);
+            arch.lineTo(-open, 0);
+            arch.lineTo(-open, spring);
+            arch.absellipse(0, spring, open, rise, Math.PI, 0, true);
+            arch.lineTo(open, 0);
+            arch.lineTo(W / 2, 0);
+            arch.lineTo(W / 2, H);
+            arch.lineTo(-W / 2, H);
+            arch.lineTo(-W / 2, 0);
+            const archGeo = new THREE.ExtrudeGeometry(arch, {
+                depth: T, bevelEnabled: true, bevelSize: 0.03, bevelThickness: 0.03, bevelSegments: 2, curveSegments: 28
+            });
+            archGeo.translate(0, 0, -T / 2);
+            const off = W / 2 - T / 2;
+            [[0, -off, 0], [0, off, 0], [-off, 0, Math.PI / 2], [off, 0, Math.PI / 2]].forEach(([x, z, ry]) => {
+                const wall = new THREE.Mesh(archGeo, mats.concrete);
+                wall.position.set(x, 0, z);
+                wall.rotation.y = ry;
+                wall.castShadow = true;
+                wall.receiveShadow = true;
+                g.add(wall);
+            });
+
+            // Volta rebaixada de coberta amb nervis
+            const roof = new THREE.Mesh(new THREE.CylinderGeometry(W / 2, W / 2, W, 32, 1, true, 0, Math.PI), mats.vault);
+            roof.rotation.z = Math.PI / 2;
+            roof.scale.set(0.24, 1, 1);
+            roof.position.set(0, H - 0.02, 0);
+            roof.castShadow = true;
+            roof.receiveShadow = true;
+            g.add(roof);
+            [-0.95, 0, 0.95].forEach(x => {
+                const rib = new THREE.Mesh(new THREE.TorusGeometry(W / 2, 0.035, 6, 32, Math.PI), mats.steel);
+                rib.rotation.y = Math.PI / 2;
+                rib.scale.set(1, 0.24, 1);
+                rib.position.set(x, H - 0.01, 0);
+                g.add(rib);
+            });
+            return g;
+        }
+
+        // Dos bancs iguals encarats, per als dissenys de banc sol
+        function createBenchPair(mats, factory, gap) {
+            const g = new THREE.Group();
+            const a = factory(mats);
+            a.position.z -= gap;
+            g.add(a);
+            const b = factory(mats);
+            b.rotation.y += Math.PI;
+            b.position.z += gap;
+            g.add(b);
+            return g;
+        }
+
+        // Dissenys de cada mòdul: miniatura, renders relacionats i model 3D que genera
+        const MODULE_VARIANTS = {
+            pergola: {
+                items: [
+                    { id: 'toldo', thumb: 'ToldoVerde_Design.png', srcs: ['ToldoVerde_Design.png'], build: createPergolaMesh },
+                    { id: 'volta', thumb: 'CubiertaAgua_Design.png', srcs: ['CubiertaAgua_Design.png'], build: createVaultPergola },
+                    { id: 'carrer', thumb: 'Modulo-CubiertaCalle_VistaDron.jfif',
+                      srcs: ['Modulo-CubiertaCalle_VistaDron.jfif', 'Modulo-CubiertaCalle_VistaInferior.jfif'],
+                      label: { ca: 'Coberta modular de carrer (arcs)', es: 'Cubierta modular de calle (arcos)' },
+                      build: createArcadeCanopy }
+                ]
+            },
+            bench: {
+                items: [
+                    { id: 'picnic', thumb: 'MesaPicnicAptaSillaRuedas_Design.png', srcs: ['MesaPicnicAptaSillaRuedas_Design.png'],
+                      label: { ca: 'Taula de pícnic accessible', es: 'Mesa de pícnic accesible' }, build: createPicnicTable },
+                    { id: 'rodona', thumb: 'MesaRedondaAptaSillaRuedas_Design.png', srcs: ['MesaRedondaAptaSillaRuedas_Design.png'],
+                      label: { ca: 'Taula rodona accessible', es: 'Mesa redonda accesible' }, build: createRoundTable },
+                    { id: 'bancU', thumb: 'BancoLuminoso-U_Design.jfif', srcs: ['BancoLuminoso-U_Design.jfif'],
+                      label: { ca: 'Parella de bancs lluminosos en U', es: 'Pareja de bancos luminosos en U' },
+                      build: (mats) => createBenchPair(mats, createUBench, 1.0) },
+                    { id: 'bancZ', thumb: 'BancoLuminoso-Z_Design.jfif', srcs: ['BancoLuminoso-Z_Design.jfif'],
+                      label: { ca: 'Parella de bancs lluminosos en Z', es: 'Pareja de bancos luminosos en Z' },
+                      build: (mats) => createBenchPair(mats, createZBench, 0.95) },
+                    { id: 'pingpong', icon: 'fa-table-tennis-paddle-ball', srcs: [],
+                      label: { ca: 'Ping-pong de formigó + banc Z', es: 'Ping-pong de hormigón + banco Z' },
+                      build: (mats) => createBenchVariant(mats, 2) }
+                ]
+            },
+            play: {
+                items: [
+                    { id: 'joc', thumb: 'Parc_Molins_VistaDron_After_v2.png', srcs: ['Parc_Molins_VistaDron_After_v2.png'], build: createPlaygroundMesh }
+                ]
+            },
+            green: {
+                items: [
+                    { id: 'combo', thumb: ['BancosVerdes_Design.png', 'Farola_Design.jfif'], srcs: ['BancosVerdes_Design.png', 'Farola_Design.jfif'],
+                      label: { ca: 'Banc-jardinera + fanal solar', es: 'Banco-jardinera + farola solar' },
+                      build: (mats) => createPlanterAndLampMesh(mats, true) },
+                    { id: 'fanal', thumb: 'Farola_Design.jfif', srcs: ['Farola_Design.jfif'],
+                      label: { ca: 'Fanal solar sol (sensor + Wi-Fi)', es: 'Farola solar sola (sensor + Wi-Fi)' },
+                      build: createLampOnly },
+                    { id: 'jardinera', thumb: 'BancosVerdes_Design.png', srcs: ['BancosVerdes_Design.png'],
+                      label: { ca: 'Banc-jardinera sol', es: 'Banco-jardinera solo' },
+                      build: (mats) => createPlanterAndLampMesh(mats, false) }
+                ]
+            }
+        };
+
+        // Llista ordenada de constructors, una per unitat del mòdul
+        function moduleUnits(key) {
+            const items = MODULE_VARIANTS[key].items;
+            if (!variantCounts[key]) return Array(modulesState[key]).fill(items[0].build);
+            const units = [];
+            items.forEach(v => {
+                for (let n = 0; n < (variantCounts[key][v.id] || 0); n++) units.push(v.build);
+            });
+            return units;
+        }
+
+        function moduleFactory(key, index) {
+            const build = moduleUnits(key)[index] || MODULE_VARIANTS[key].items[0].build;
+            return (mats) => build(mats);
         }
 
         // ------------------------------------------------------------------
@@ -2450,15 +2806,49 @@
             event.target.value = '';
         }
 
-        function openLightbox(src, title) {
-            document.getElementById('lightbox-img').src = src;
-            document.getElementById('lightbox-title').textContent = title;
+        // Visor: una sola imatge (openLightbox) o un conjunt navegable (openLightboxSet)
+        let lightboxSet = [];
+        let lightboxIndex = 0;
+
+        function showLightboxItem() {
+            const item = lightboxSet[lightboxIndex];
+            const multi = lightboxSet.length > 1;
+            document.getElementById('lightbox-img').src = item.src;
+            document.getElementById('lightbox-title').textContent = item.title;
+            const counter = document.getElementById('lightbox-counter');
+            counter.textContent = `${lightboxIndex + 1} / ${lightboxSet.length}`;
+            counter.classList.toggle('hidden', !multi);
+            document.getElementById('lightbox-prev').classList.toggle('hidden', !multi);
+            document.getElementById('lightbox-next').classList.toggle('hidden', !multi);
+        }
+
+        function openLightboxSet(items, index = 0) {
+            lightboxSet = items;
+            lightboxIndex = Math.max(0, Math.min(items.length - 1, index));
+            showLightboxItem();
             document.getElementById('render-lightbox').classList.remove('hidden');
+        }
+
+        function openLightbox(src, title) {
+            openLightboxSet([{ src, title }], 0);
+        }
+
+        function stepLightbox(delta) {
+            if (lightboxSet.length < 2) return;
+            lightboxIndex = (lightboxIndex + delta + lightboxSet.length) % lightboxSet.length;
+            showLightboxItem();
         }
 
         function closeLightbox() {
             document.getElementById('render-lightbox').classList.add('hidden');
         }
+
+        document.addEventListener('keydown', (e) => {
+            if (document.getElementById('render-lightbox').classList.contains('hidden')) return;
+            if (e.key === 'Escape') closeLightbox();
+            else if (e.key === 'ArrowLeft') stepLightbox(-1);
+            else if (e.key === 'ArrowRight') stepLightbox(1);
+        });
 
         // ==========================================
         // 4. GENERADOR I EXPORTADOR D'ARXIUS STL REALS

@@ -1,0 +1,2557 @@
+<!DOCTYPE html>
+<html lang="ca" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CANPA UrbanKit | Solucions Modulars i Configurador 3D per a Ajuntaments</title>
+    <link rel="icon" type="image/png" href="Logo_CANPA_icono.png">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js per al motor 3D WebGL -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Carregadors 3D per a maquetes pròpies (.STL i .OBJ) -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono per a dades tècniques -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        // Verd Botànic #2D5A27
+                        forest: {
+                            50: '#eef3ec',
+                            100: '#dbe7d7',
+                            500: '#4f8a47',
+                            600: '#3b7234',
+                            700: '#2D5A27',
+                            800: '#244a20',
+                            900: '#1b3a18',
+                        },
+                        // Blau Territori #1F4E5B
+                        territori: {
+                            50: '#eef4f5',
+                            100: '#d6e5e8',
+                            600: '#2a6576',
+                            700: '#1F4E5B',
+                            800: '#1a424d',
+                            900: '#15353e',
+                        },
+                        // Neutres: Gris Grafito Clar #F4F6F0 · Gris formigó #B4B4B4 · foscos en Blau Territori
+                        stone: {
+                            50: '#F4F6F0',
+                            100: '#eceee7',
+                            200: '#dfe2da',
+                            300: '#c8cac4',
+                            400: '#B4B4B4',
+                            500: '#7b807c',
+                            600: '#5f6664',
+                            700: '#3f5a60',
+                            800: '#2a5c69',
+                            900: '#1F4E5B',
+                            950: '#163a43',
+                        },
+                        // Groc Sol #F4A261 (accent)
+                        terracotta: {
+                            100: '#fdecdc',
+                            500: '#F4A261',
+                            600: '#e08a45',
+                            700: '#b9682a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        #canvas-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 480px;
+            cursor: grab;
+            touch-action: none;
+        }
+        #canvas-container:active {
+            cursor: grabbing;
+        }
+        .mode-btn-active {
+            background-color: #2D5A27;
+            color: #ffffff;
+            border-color: #2D5A27;
+        }
+        /* ---- Selector de quantitat de mòduls ---- */
+        .module-card {
+            background: #fff;
+            border: 1px solid #dfe2da;
+            border-radius: 1rem;
+            padding: 0.875rem;
+            transition: border-color .2s, box-shadow .2s, background-color .2s;
+        }
+        .module-card.is-active {
+            border-color: #3b7234;
+            box-shadow: 0 0 0 3px rgba(45, 90, 39, 0.12);
+        }
+        .module-card:not(.is-active) { background: #fafbf8; }
+        .module-card:not(.is-active) h4 { color: #7b807c; }
+        .module-thumb {
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            flex-shrink: 0;
+            border: 1px solid #dfe2da;
+            background: #F4F6F0;
+            cursor: zoom-in;
+        }
+        .module-thumb { display: flex; }
+        .module-thumb button { flex: 1; min-width: 0; height: 100%; overflow: hidden; cursor: zoom-in; }
+        .module-thumb.is-split button + button { border-left: 2px solid #fff; }
+        .module-thumb button:focus-visible { outline: 2px solid #F4A261; outline-offset: -2px; }
+        .module-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s; }
+        .module-thumb button:hover img { transform: scale(1.12); }
+        .ba-compare { position: relative; aspect-ratio: 1376 / 768; overflow: hidden; user-select: none; }
+        .ba-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .ba-before { position: absolute; inset: 0; clip-path: inset(0 calc(100% - var(--ba)) 0 0); }
+        .ba-handle { position: absolute; top: 0; bottom: 0; left: var(--ba); width: 3px; margin-left: -1.5px; background: #fff; box-shadow: 0 0 12px rgba(0,0,0,.4); pointer-events: none; }
+        .ba-handle span { position: absolute; top: 50%; left: 50%; width: 40px; height: 40px; transform: translate(-50%, -50%); border-radius: 999px; background: #fff; color: #2D5A27; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,.3); }
+        .ba-label { position: absolute; top: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #fff; background: rgba(31,78,91,.85); padding: 5px 10px; border-radius: 8px; pointer-events: none; }
+        .ba-range { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: ew-resize; margin: 0; }
+        .render-strip-label {
+            flex-shrink: 0;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: #fff;
+            background: rgba(31, 78, 91, .85);
+            padding: 6px 10px;
+            border-radius: 10px;
+            backdrop-filter: blur(6px);
+        }
+        .render-thumb {
+            flex-shrink: 0;
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #fff;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+            background: #F4F6F0;
+            cursor: zoom-in;
+            transition: transform .2s;
+        }
+        .render-thumb:hover { transform: translateY(-3px) scale(1.06); }
+        .render-thumb:focus-visible { outline: 2px solid #F4A261; outline-offset: 2px; }
+        .render-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .qty-stepper {
+            display: inline-flex;
+            align-items: center;
+            background: #eceee7;
+            border: 1px solid #dfe2da;
+            border-radius: 0.875rem;
+            padding: 3px;
+            flex-shrink: 0;
+        }
+        .qty-btn {
+            width: 2.25rem;
+            height: 2.25rem;
+            border-radius: 0.65rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: #1F4E5B;
+            background: #fff;
+            box-shadow: 0 1px 2px rgba(0,0,0,.06);
+            cursor: pointer;
+            transition: background-color .15s, transform .1s, opacity .15s;
+        }
+        .qty-btn:hover:not(:disabled) { background: #dbe7d7; }
+        .qty-btn:active:not(:disabled) { transform: scale(0.92); }
+        .qty-btn-plus { background: #2D5A27; color: #fff; }
+        .qty-btn-plus:hover:not(:disabled) { background: #244a20; }
+        .qty-btn:disabled { opacity: .35; cursor: not-allowed; box-shadow: none; }
+        .qty-btn:focus-visible, .qty-seg:focus-visible {
+            outline: 2px solid #F4A261;
+            outline-offset: 2px;
+        }
+        .qty-value {
+            min-width: 2.25rem;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 800;
+            font-size: 1rem;
+            color: #1F4E5B;
+        }
+        .qty-bump { animation: qtyBump .25s ease-out; }
+        @keyframes qtyBump {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.35); color: #2D5A27; }
+            100% { transform: scale(1); }
+        }
+        .qty-segments { display: flex; gap: 4px; }
+        .qty-seg {
+            flex: 1;
+            height: 8px;
+            border-radius: 999px;
+            background: #dfe2da;
+            cursor: pointer;
+            transition: background-color .2s, transform .15s;
+        }
+        .qty-seg:hover { transform: scaleY(1.5); background: #c8cac4; }
+        .qty-seg.is-on { background: #3b7234; }
+        .qty-seg.is-on:hover { background: #2D5A27; }
+        @media (prefers-reduced-motion: reduce) {
+            .qty-bump { animation: none; }
+            .qty-seg, .qty-btn, .module-card { transition: none; }
+        }
+        .blueprint-grid {
+            background-image: linear-gradient(to right, rgba(47, 73, 44, 0.06) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(47, 73, 44, 0.06) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-900 antialiased selection:bg-forest-700 selection:text-white">
+
+    <!-- NAVEGACIÓ B2G -->
+    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-stone-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Marca -->
+                <div class="flex items-center gap-3">
+                    <a href="#" class="flex items-center gap-2.5 shrink-0" aria-label="CANPA Urban Design">
+                        <img src="Logo_CANPA_icono.png" alt="" class="h-10 w-auto">
+                        <img src="Logo_CANPA_texto.png" alt="CANPA Urban Design" class="h-9 w-auto">
+                    </a>
+                    <div class="hidden 2xl:block pl-3 border-l border-stone-200">
+                        <span class="inline-block text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-stone-100 text-stone-700 border border-stone-300">B2G MUNICIPAL</span>
+                        <span class="block text-[11px] text-stone-500 font-medium mt-0.5" data-i18n="nav_sub">Partner Industrial: Cementos Molins</span>
+                    </div>
+                </div>
+
+                <!-- Enllaços Desktop -->
+                <nav class="hidden lg:flex items-center space-x-7 text-sm font-medium text-stone-700">
+                    <a href="#proposta" class="hover:text-forest-700 transition-colors" data-i18n="nav_value">Serveis Municipals</a>
+                    <a href="#studio-3d" class="text-forest-700 font-bold flex items-center gap-1.5">
+                        <i class="fa-solid fa-cube text-terracotta-500"></i>
+                        <span data-i18n="nav_studio">Configurador 3D & STL</span>
+                    </a>
+                    <a href="#renders-propis" class="hover:text-forest-700 transition-colors flex items-center gap-1.5">
+                        <i class="fa-solid fa-images text-forest-600"></i>
+                        <span data-i18n="nav_gallery">Renders i Maquetes Pròpies</span>
+                    </a>
+                    <a href="#proces" class="hover:text-forest-700 transition-colors" data-i18n="nav_process">Metodologia</a>
+                    <a href="#contacte" class="hover:text-forest-700 transition-colors" data-i18n="nav_contact">Sol·licitar Pilot</a>
+                </nav>
+
+                <!-- Selector d'Idioma + CTA -->
+                <div class="flex items-center gap-3">
+                    <div class="inline-flex rounded-lg border border-stone-300 bg-stone-100 p-0.5 text-xs font-bold">
+                        <button onclick="setLanguage('ca')" id="lang-ca" class="px-2.5 py-1 rounded-md bg-white text-stone-900 shadow-xs transition-all cursor-pointer">CAT</button>
+                        <button onclick="setLanguage('es')" id="lang-es" class="px-2.5 py-1 rounded-md text-stone-500 hover:text-stone-900 transition-all cursor-pointer">ESP</button>
+                    </div>
+                    <a href="#contacte" class="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-forest-700 hover:bg-forest-800 text-white text-xs font-semibold shadow-xs transition-all">
+                        <span data-i18n="nav_cta">Contacte</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 1. HERO B2G: PROPOSTA DE VALOR PER A AJUNTAMENTS -->
+    <section id="proposta" class="relative bg-stone-900 text-white overflow-hidden border-b border-stone-800">
+        <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 28px 28px;"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24 relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                <div class="lg:col-span-7 space-y-6">
+                    <div class="inline-flex flex-wrap items-center gap-2 px-3 py-1.5 rounded-full bg-forest-800/80 border border-forest-600/50 text-xs font-semibold text-forest-100">
+                        <i class="fa-solid fa-building-columns text-terracotta-500"></i>
+                        <span data-i18n="hero_badge">Infraestructura Urbana Sostenible · Llei 15/2026 i PMR</span>
+                    </div>
+                    <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight" data-i18n="hero_title">
+                        Transformem places i parcs municipals en refugis climàtics sense obra civil pesada.
+                    </h1>
+                    <p class="text-base sm:text-lg text-stone-300 max-w-2xl leading-relaxed" data-i18n="hero_desc">
+                        Dissenyem i subministrem sistemes modulars <strong>Plug & Play</strong> fabricats amb formigons eco-sostenibles de <strong>Cementos Molins</strong>. Dissenya l'espai en 3D, imprimeix la teva maqueta física a escala i executa la instal·lació en 48 hores.
+                    </p>
+                    <div class="flex flex-wrap gap-4 pt-2">
+                        <a href="#studio-3d" class="px-6 py-3.5 rounded-xl bg-terracotta-500 hover:bg-terracotta-600 text-stone-900 font-semibold text-sm shadow-lg transition-all flex items-center gap-2.5">
+                            <i class="fa-solid fa-cubes"></i>
+                            <span data-i18n="hero_btn_3d">Obrir Configurador 3D i Maquetes</span>
+                        </a>
+                        <a href="#contacte" class="px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white font-semibold text-sm transition-all" data-i18n="hero_btn_dossier">
+                            Demanar Dossier per a Licitació
+                        </a>
+                    </div>
+                </div>
+
+                <!-- TARGETA D'AVANTATGES PER A L'ADMINISTRACIÓ -->
+                <div class="lg:col-span-5">
+                    <div class="bg-white/5 border border-white/10 rounded-3xl p-6 sm:p-7 backdrop-blur-sm space-y-5">
+                        <span class="text-[11px] font-mono font-bold uppercase tracking-wider text-terracotta-500" data-i18n="hero_card_header">AVANTATGES PER A L'ADMINISTRACIÓ</span>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+                                <span class="block text-2xl font-mono font-extrabold text-white">-40%</span>
+                                <span class="block text-xs text-stone-300 mt-1 leading-snug" data-i18n="hero_kpi_1">Estalvi en cost d'execució vs. obra tradicional</span>
+                            </div>
+                            <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+                                <span class="block text-2xl font-mono font-extrabold text-white">-4 °C</span>
+                                <span class="block text-xs text-stone-300 mt-1 leading-snug" data-i18n="hero_kpi_2">Reducció de temperatura percebuda a l'estiu</span>
+                            </div>
+                            <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+                                <span class="block text-2xl font-mono font-extrabold text-white">100%</span>
+                                <span class="block text-xs text-stone-300 mt-1 leading-snug" data-i18n="hero_kpi_3">Compliment Llei 15/2026 i accessibilitat PMR</span>
+                            </div>
+                            <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+                                <span class="block text-2xl font-mono font-extrabold text-white">.STL</span>
+                                <span class="block text-xs text-stone-300 mt-1 leading-snug" data-i18n="hero_kpi_4">Arxius llestos per imprimir maquetes a escala</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. CONFIGURADOR 3D -->
+    <section id="studio-3d" class="py-14 lg:py-20 blueprint-grid border-b border-stone-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
+                <div class="max-w-3xl">
+                    <span class="text-xs font-mono font-bold uppercase tracking-widest text-forest-700" data-i18n="studio_tag">EINA TÈCNICA MUNICIPAL · WEBGL 3D & IMPRESSIÓ STL</span>
+                    <h2 class="text-2xl sm:text-4xl font-extrabold text-stone-900 mt-2" data-i18n="studio_title">Configurador d'Espais i Generador de Maquetes 3D</h2>
+                    <p class="text-stone-600 mt-2 text-sm sm:text-base" data-i18n="studio_desc">Selecciona els mòduls al panell esquerre, gira la càmera (arrossega amb el ratolí o dit) i alterna entre el render realista i el mode d'impressió 3D per descarregar el fitxer STL.</p>
+                </div>
+                <div class="inline-flex p-1 rounded-2xl bg-white border border-stone-200 shadow-sm shrink-0">
+                    <button id="btn-mode-realistic" onclick="setRenderMode('realistic')" class="mode-btn-active px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer">
+                        <i class="fa-solid fa-sun"></i><span data-i18n="mode_render">Vista Render Realista</span>
+                    </button>
+                    <button id="btn-mode-stl" onclick="setRenderMode('stl')" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-stone-700 hover:bg-stone-100 flex items-center gap-2 transition-all cursor-pointer">
+                        <i class="fa-solid fa-print"></i><span data-i18n="mode_stl">Mode Maqueta Impressió 3D / STL</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 bg-white rounded-3xl border border-stone-200 shadow-lg overflow-hidden">
+                <!-- PANELL LATERAL: CATÀLEG DE PECES MODULARS + PUJADA DE MAQUETES PRÒPIES -->
+                <div class="lg:col-span-4 bg-stone-50 border-b lg:border-b-0 lg:border-r border-stone-200 p-5 sm:p-6 flex flex-col justify-between space-y-6">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between border-b border-stone-200 pb-3">
+                            <h3 class="font-bold text-base text-stone-900" data-i18n="cat_title">Catàleg Modular Plug & Play</h3>
+                            <button onclick="resetScene()" class="text-xs font-semibold text-stone-500 hover:text-terracotta-700 flex items-center gap-1 cursor-pointer">
+                                <i class="fa-solid fa-rotate-left"></i>
+                                <span data-i18n="cat_reset">Reiniciar</span>
+                            </button>
+                        </div>
+
+                        <!-- BLOC NOU: PUJAR LA TEVA PRÒPIA MAQUETA 3D (.STL / .OBJ) I FOTO DE L'ESPAI -->
+                        <div class="bg-forest-50/90 p-3.5 rounded-2xl border-2 border-dashed border-forest-600/50 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-mono font-bold text-forest-800 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-cloud-arrow-up text-terracotta-700"></i>
+                                    <span data-i18n="custom_3d_title">LES TEVES PECES I FOTOS</span>
+                                </span>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-forest-700 text-white">.STL / .OBJ / IMG</span>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2">
+                                <!-- Input ocult per a arxius 3D -->
+                                <input type="file" id="upload-3d-model" accept=".stl,.obj" class="hidden" onchange="handleCustom3DUpload(event)">
+                                <button onclick="document.getElementById('upload-3d-model').click()" class="py-2 px-2.5 rounded-xl bg-white hover:bg-forest-100 border border-forest-300 text-forest-900 font-bold text-[11px] shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                                    <i class="fa-solid fa-cube text-terracotta-700"></i>
+                                    <span data-i18n="btn_upload_stl">Pujar Maqueta 3D</span>
+                                </button>
+
+                                <!-- Input ocult per a foto de fons de l'espai -->
+                                <input type="file" id="upload-site-backdrop" accept="image/*" class="hidden" onchange="handleBackdropUpload(event)">
+                                <button onclick="document.getElementById('upload-site-backdrop').click()" class="py-2 px-2.5 rounded-xl bg-white hover:bg-forest-100 border border-forest-300 text-forest-900 font-bold text-[11px] shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                                    <i class="fa-solid fa-panorama text-forest-700"></i>
+                                    <span data-i18n="btn_upload_bg">Foto Espai Fons</span>
+                                </button>
+                            </div>
+
+                            <!-- Controls de transformació quan hi ha un model 3D propi carregat -->
+                            <div id="custom-model-controls" class="hidden pt-2 border-t border-forest-200 space-y-2.5">
+                                <div class="flex items-center justify-between text-[11px]">
+                                    <span class="font-bold text-forest-900 truncate max-w-[175px]" id="custom-model-name">maqueta_propia.stl</span>
+                                    <button onclick="removeCustomModel()" class="text-terracotta-700 hover:underline font-bold cursor-pointer" data-i18n="btn_remove_custom">Treure</button>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 text-[11px]">
+                                    <div>
+                                        <label class="block text-stone-600 font-semibold mb-0.5" data-i18n="lbl_custom_scale">Escala peça</label>
+                                        <input type="range" id="custom-scale-slider" min="0.2" max="3" step="0.1" value="1" oninput="updateCustomModelTransform()" class="w-full accent-forest-700 cursor-pointer">
+                                    </div>
+                                    <div>
+                                        <label class="block text-stone-600 font-semibold mb-0.5" data-i18n="lbl_custom_rot">Rotació (°)</label>
+                                        <input type="range" id="custom-rot-slider" min="0" max="360" step="15" value="0" oninput="updateCustomModelTransform()" class="w-full accent-forest-700 cursor-pointer">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 text-[11px]">
+                                    <div>
+                                        <label class="block text-stone-600 font-semibold mb-0.5">Posició X</label>
+                                        <input type="range" id="custom-pos-x" min="-8" max="8" step="0.5" value="0" oninput="updateCustomModelTransform()" class="w-full accent-terracotta-500 cursor-pointer">
+                                    </div>
+                                    <div>
+                                        <label class="block text-stone-600 font-semibold mb-0.5">Posició Z</label>
+                                        <input type="range" id="custom-pos-z" min="-6" max="6" step="0.5" value="0" oninput="updateCustomModelTransform()" class="w-full accent-terracotta-500 cursor-pointer">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botó per treure el fons personalitzat si n'hi ha -->
+                            <div id="custom-backdrop-bar" class="hidden flex items-center justify-between pt-1.5 border-t border-forest-200 text-[11px]">
+                                <span class="text-forest-800 font-medium flex items-center gap-1">
+                                    <i class="fa-solid fa-image"></i> <span data-i18n="bg_active_lbl">Foto de l'espai activa</span>
+                                </span>
+                                <button onclick="removeCustomBackdrop()" class="text-terracotta-700 hover:underline font-bold cursor-pointer" data-i18n="btn_remove_custom">Treure</button>
+                            </div>
+                        </div>
+
+                        <!-- Selector de mòduls (es genera des de MODULE_CATALOG al JS) -->
+                        <div id="module-list" class="space-y-3" role="list"></div>
+                    </div>
+
+                    <!-- Caixa d'Exportació STL per a Impressora 3D -->
+                    <div class="p-4 rounded-2xl bg-stone-900 text-white space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-mono font-bold text-terracotta-500 flex items-center gap-1.5">
+                                <i class="fa-solid fa-print"></i> IMPRESSIÓ 3D / MAQUETA FÍSICA
+                            </span>
+                            <select id="stl-scale" class="bg-stone-800 border border-stone-700 rounded-lg px-2 py-1 text-xs font-mono text-white">
+                                <option value="50">Escala 1:50</option>
+                                <option value="100" selected>Escala 1:100</option>
+                            </select>
+                        </div>
+                        <p class="text-xs text-stone-300 leading-relaxed" data-i18n="stl_info">
+                            Descarrega la geometria 3D exacta d'aquesta configuració en format <strong>.STL</strong> llest per laminar a Cura o PrusaSlicer (PLA/Resina).
+                        </p>
+                        <button onclick="exportSTL()" class="w-full py-3 px-4 rounded-xl bg-terracotta-500 hover:bg-terracotta-600 text-stone-900 font-bold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-file-arrow-down text-base"></i>
+                            <span data-i18n="btn_export_stl">Exportar Arxiu STL / Pack Maqueta 3D</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- VISOR INTERACTIU 3D (THREE.JS) + CALCULADORA TÈCNICA -->
+                <div class="lg:col-span-8 flex flex-col justify-between bg-stone-100">
+                    <!-- Contenidor del Canvas WebGL -->
+                    <div class="relative flex-1 min-h-[460px] sm:min-h-[520px]">
+                        <div id="canvas-container"></div>
+
+                        <!-- Superposició d'ajuda i cotas tècniques -->
+                        <div class="absolute top-4 left-4 right-4 flex flex-wrap justify-between items-start gap-2 pointer-events-none">
+                            <div class="bg-white/90 backdrop-blur-md px-3.5 py-2 rounded-xl border border-stone-200 shadow-xs text-xs">
+                                <span class="font-bold text-stone-900 block" id="viewport-badge-title">Vista Render Realista · Il·luminació Solar</span>
+                                <span class="text-stone-500 text-[11px]" data-i18n="viewport_controls">Arrossega per rotar 360° · Roda/Pessic per fer zoom</span>
+                            </div>
+
+                            <!-- Etiqueta de cotes tècniques (visible especialment en mode STL) -->
+                            <div id="stl-dimensions-badge" class="hidden bg-stone-900/95 text-white px-3.5 py-2 rounded-xl border border-stone-700 font-mono text-[11px] shadow-md">
+                                <div class="text-terracotta-500 font-bold">MALLA STL VERIFICADA · PLA / RESINA</div>
+                                <div id="stl-dims-text">Base: 240 x 180 mm (Escala 1:100) · Gruix min: 1.6 mm</div>
+                            </div>
+                        </div>
+
+                        <!-- Tira de renders de referència dels mòduls actius -->
+                        <div id="render-strip" class="hidden absolute bottom-4 left-4 right-4 z-10 flex items-center gap-2 overflow-x-auto pb-1"></div>
+
+                        <!-- Notificació flotant de descàrrega STL -->
+                        <div id="toast-notification" class="hidden absolute bottom-4 left-1/2 -translate-x-1/2 bg-forest-800 text-white px-5 py-3 rounded-xl shadow-2xl border border-forest-600 text-xs sm:text-sm font-semibold flex items-center gap-2.5 z-20">
+                            <i class="fa-solid fa-circle-check text-forest-100 text-base"></i>
+                            <span id="toast-message">Arxiu STL generat i descarregat correctament!</span>
+                        </div>
+                    </div>
+
+                    <!-- CALCULADORA TÈCNICA EN TEMPS REAL (BARRA INFERIOR) -->
+                    <div class="bg-white border-t border-stone-200 p-4 sm:p-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-mono font-bold uppercase tracking-wider text-stone-500" data-i18n="calc_header">
+                                CALCULADORA TÈCNICA EN TEMPS REAL (IMPACTE MUNICIPAL)
+                            </span>
+                            <span class="text-xs font-semibold text-forest-700" id="total-modules-label">7 mòduls actius a l'escena</span>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                            <div class="p-3.5 rounded-2xl bg-forest-50 border border-forest-100">
+                                <span class="text-xs text-forest-800 font-medium block" data-i18n="calc_shade">Superfície d'Ombra</span>
+                                <span id="val-shade" class="text-xl sm:text-2xl font-mono font-extrabold text-forest-900 mt-0.5 block">56 m²</span>
+                                <span class="text-[11px] text-forest-700" data-i18n="calc_shade_sub">Protecció solar immediata</span>
+                            </div>
+                            <div class="p-3.5 rounded-2xl bg-terracotta-100/60 border border-terracotta-500/20">
+                                <span class="text-xs text-terracotta-700 font-medium block" data-i18n="calc_temp">Reducció Tèrmica</span>
+                                <span id="val-temp" class="text-xl sm:text-2xl font-mono font-extrabold text-stone-900 mt-0.5 block">-3.6 °C</span>
+                                <span class="text-[11px] text-stone-600" data-i18n="calc_temp_sub">Mitigació illa de calor</span>
+                            </div>
+                            <div class="p-3.5 rounded-2xl bg-stone-100 border border-stone-200">
+                                <span class="text-xs text-stone-600 font-medium block" data-i18n="calc_co2">Estalvi CO₂ Molins</span>
+                                <span id="val-co2" class="text-xl sm:text-2xl font-mono font-extrabold text-stone-900 mt-0.5 block">1.840 kg</span>
+                                <span class="text-[11px] text-forest-700 font-medium" data-i18n="calc_co2_sub">Formigó baixa petjada</span>
+                            </div>
+                            <div class="p-3.5 rounded-2xl bg-stone-100 border border-stone-200">
+                                <span class="text-xs text-stone-600 font-medium block" data-i18n="calc_cost">Estalvi vs. Obra Civil</span>
+                                <span id="val-savings" class="text-xl sm:text-2xl font-mono font-extrabold text-forest-700 mt-0.5 block">36%</span>
+                                <span class="text-[11px] text-stone-500" data-i18n="calc_cost_sub">Muntatge ràpid 48h</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2.5 SECCIÓ NOVA: GALERIA I COMPARADOR DELS VOSTRES PROPIS RENDERS I FOTOS DE MAQUETES -->
+    <section id="renders-propis" class="py-16 lg:py-20 bg-white border-b border-stone-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+                <div>
+                    <div class="inline-flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-terracotta-700 bg-terracotta-100 px-3 py-1 rounded-md mb-2">
+                        <i class="fa-solid fa-photo-film"></i>
+                        <span data-i18n="gal_tag">PORTAFOLI D'INTERVENCIÓ · ABANS I DESPRÉS</span>
+                    </div>
+                    <h2 class="text-2xl sm:text-4xl font-extrabold text-stone-900" data-i18n="gal_title">Els vostres Renders i Fotos de Maquetes</h2>
+                    <p class="text-stone-600 mt-2 max-w-2xl text-sm sm:text-base" data-i18n="gal_desc">
+                        Puja directament els renders que heu generat (parc infantil, pèrgoles, abans i després de Molins de Rei o fotos de la maqueta física) per presentar-los a l'ajuntament dins d'aquesta mateixa web.
+                    </p>
+                </div>
+
+                <div>
+                    <input type="file" id="upload-renders-gallery" accept="image/*" multiple class="hidden" onchange="handleGalleryRendersUpload(event)">
+                    <button onclick="document.getElementById('upload-renders-gallery').click()" class="px-5 py-3.5 rounded-xl bg-forest-700 hover:bg-forest-800 text-white font-bold text-sm shadow-md transition-all flex items-center gap-2.5 cursor-pointer">
+                        <i class="fa-solid fa-upload"></i>
+                        <span data-i18n="btn_add_renders">Afegir els nostres Renders / Fotos</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Comparador Abans / Després (vista de dron del parc infantil) -->
+            <div class="mb-8 rounded-3xl overflow-hidden border border-stone-200 shadow-lg bg-stone-900">
+                <div id="ba-compare" class="ba-compare" style="--ba: 50%">
+                    <img src="ParqueMolins_VistaDron_After.png" alt="" class="ba-img" draggable="false">
+                    <div class="ba-before"><img src="ParqueMolins_VistaDron_Before.jfif" alt="" class="ba-img" draggable="false"></div>
+                    <div class="ba-handle" aria-hidden="true"><span><i class="fa-solid fa-arrows-left-right"></i></span></div>
+                    <span class="ba-label left-3" data-i18n="ba_before">Abans</span>
+                    <span class="ba-label right-3" data-i18n="ba_after">Després</span>
+                    <input type="range" min="0" max="100" value="50" class="ba-range" aria-label="Abans / Després"
+                        oninput="document.getElementById('ba-compare').style.setProperty('--ba', this.value + '%')">
+                </div>
+                <div class="px-5 py-3 flex flex-wrap items-center justify-between gap-2 text-white">
+                    <span class="text-sm font-bold" data-i18n="ba_title">Parc infantil: de pati al sol a plaça amb pèrgola vegetal</span>
+                    <span class="text-[11px] font-mono text-stone-400" data-i18n="ba_hint">Arrossega per comparar</span>
+                </div>
+            </div>
+
+            <!-- Graella de Renders Pujats per l'Usuari -->
+            <div id="custom-renders-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Targeta d'exemple / placeholder inicial interactiu -->
+                <div onclick="document.getElementById('upload-renders-gallery').click()" class="group border-2 border-dashed border-stone-300 hover:border-forest-600 rounded-3xl p-8 flex flex-col items-center justify-center text-center min-h-[280px] bg-stone-50 hover:bg-forest-50/40 transition-all cursor-pointer">
+                    <div class="w-14 h-14 rounded-2xl bg-white border border-stone-200 text-forest-700 group-hover:scale-110 transition-transform flex items-center justify-center text-2xl shadow-xs mb-4">
+                        <i class="fa-solid fa-images"></i>
+                    </div>
+                    <h3 class="font-bold text-stone-900 text-base" data-i18n="gal_empty_title">Carrega aquí els teus renders</h3>
+                    <p class="text-xs text-stone-500 mt-1.5 max-w-xs leading-relaxed" data-i18n="gal_empty_desc">
+                        Selecciona una o diverses imatges (JPG, PNG, WEBP) del vostre parc infantil cobert, la comparativa Abans/Després o la maqueta física.
+                    </p>
+                    <span class="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-forest-700">
+                        <i class="fa-solid fa-plus"></i> <span data-i18n="gal_empty_cta">Seleccionar arxius del dispositiu</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modal Visor a Pantalla Completa per a Renders Propis -->
+    <div id="render-lightbox" class="hidden fixed inset-0 z-50 bg-stone-950/90 backdrop-blur-sm flex items-center justify-center p-4" onclick="closeLightbox(event)">
+        <div class="max-w-5xl w-full bg-stone-900 border border-stone-700 rounded-3xl overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-stone-800">
+                <h4 id="lightbox-title" class="font-bold text-white text-sm sm:text-base truncate">Render CANPA UrbanKit</h4>
+                <button onclick="closeLightbox()" class="w-9 h-9 rounded-xl bg-stone-800 hover:bg-stone-700 text-white flex items-center justify-center cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-4 bg-black flex items-center justify-center max-h-[78vh]">
+                <img id="lightbox-img" src="" alt="Render ampliat" class="max-h-[72vh] w-auto object-contain rounded-xl">
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. PROCÉS PER A AJUNTAMENTS (3 PASSOS) -->
+    <section id="proces" class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-14">
+            <span class="text-xs font-mono font-bold uppercase tracking-widest text-forest-700" data-i18n="proc_tag">METODOLOGIA DE TREBALL B2G</span>
+            <h2 class="text-3xl font-extrabold text-stone-900 mt-2" data-i18n="proc_title">Com implementem CANPA UrbanKit al teu municipi</h2>
+            <p class="text-stone-600 mt-3" data-i18n="proc_desc">Un procés àgil pensat per als serveis tècnics municipals, regidories d'urbanisme i transició ecològica.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Pas 1 -->
+            <div class="bg-white rounded-3xl p-8 border border-stone-200 shadow-xs relative">
+                <div class="w-12 h-12 rounded-2xl bg-forest-800 text-white font-mono font-bold text-lg flex items-center justify-center mb-6">01</div>
+                <h3 class="text-xl font-bold text-stone-900 mb-3" data-i18n="step1_title">Diagnòstic i Selecció Modular</h3>
+                <p class="text-sm text-stone-600 leading-relaxed" data-i18n="step1_desc">
+                    Analitzem la plaça o parc municipal (exposició solar, manca d'ombra, fluxos de vianants i compliment d'accessibilitat Llei 15/2026) i seleccionem la combinació òptima de mòduls Plug & Play.
+                </p>
+            </div>
+
+            <!-- Pas 2 -->
+            <div class="bg-white rounded-3xl p-8 border border-stone-200 shadow-xs relative">
+                <div class="w-12 h-12 rounded-2xl bg-terracotta-500 text-stone-900 font-mono font-bold text-lg flex items-center justify-center mb-6">02</div>
+                <h3 class="text-xl font-bold text-stone-900 mb-3" data-i18n="step2_title">Simulació 3D i Maqueta Física</h3>
+                <p class="text-sm text-stone-600 leading-relaxed" data-i18n="step2_desc">
+                    Generem els renders integrats de l'abans i el després juntament amb l'arxiu <strong>STL a escala</strong> per imprimir la maqueta física. Ideal per validar el projecte amb alcaldia i processos participatius veïnals.
+                </p>
+            </div>
+
+            <!-- Pas 3 -->
+            <div class="bg-white rounded-3xl p-8 border border-stone-200 shadow-xs relative">
+                <div class="w-12 h-12 rounded-2xl bg-forest-800 text-white font-mono font-bold text-lg flex items-center justify-center mb-6">03</div>
+                <h3 class="text-xl font-bold text-stone-900 mb-3" data-i18n="step3_title">Instal·lació Ràpida Plug & Play</h3>
+                <p class="text-sm text-stone-600 leading-relaxed" data-i18n="step3_desc">
+                    Subministrament directe des de fàbrica amb prefabricats de <strong>Cementos Molins</strong>. Muntatge en sec en 48 hores sense excavacions ni runes, llest per a l'ús immediat de la ciutadania.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. FORMULARI DE SOL·LICITUD DE PROJECTE PILOT / PRESSUPOST MUNICIPAL -->
+    <section id="contacte" class="py-20 bg-stone-900 text-white">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-stone-800 border border-stone-700 rounded-3xl p-8 sm:p-12 shadow-2xl">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                    <div class="lg:col-span-5 space-y-4">
+                        <span class="text-xs font-mono font-bold uppercase tracking-wider text-terracotta-500" data-i18n="form_tag">CONTACTE INSTITUCIONAL</span>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold" data-i18n="form_title">Sol·licita un Estudi Pilot Municipal</h2>
+                        <p class="text-sm text-stone-300 leading-relaxed" data-i18n="form_desc">
+                            Envia'ns les dades de l'espai on vols actuar i el nostre equip tècnic prepararà una proposta modular amb càlcul d'impacte climàtic i maqueta 3D.
+                        </p>
+                        <div class="pt-4 space-y-3 text-xs text-stone-300 border-t border-stone-700">
+                            <div class="flex items-center gap-2.5">
+                                <i class="fa-solid fa-check text-terracotta-500"></i>
+                                <span data-i18n="form_bullet1">Compatible amb subvencions de refugis climàtics</span>
+                            </div>
+                            <div class="flex items-center gap-2.5">
+                                <i class="fa-solid fa-check text-terracotta-500"></i>
+                                <span data-i18n="form_bullet2">Documentació tècnica per a contractació pública</span>
+                            </div>
+                            <div class="flex items-center gap-2.5">
+                                <i class="fa-solid fa-check text-terracotta-500"></i>
+                                <span data-i18n="form_bullet3">Enviament de pack de mostres de materials Molins</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="b2g-form" onsubmit="handleFormSubmit(event)" class="lg:col-span-7 space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-stone-300 mb-1.5" data-i18n="lbl_muni">Ajuntament / Entitat Pública *</label>
+                                <input type="text" required placeholder="Ex: Ajuntament de Molins de Rei" class="w-full px-4 py-2.5 rounded-xl bg-stone-900 border border-stone-700 text-white text-sm focus:outline-none focus:border-terracotta-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-stone-300 mb-1.5" data-i18n="lbl_role">Càrrec / Departament *</label>
+                                <input type="text" required placeholder="Ex: Tècnic d'Urbanisme / Medi Ambient" class="w-full px-4 py-2.5 rounded-xl bg-stone-900 border border-stone-700 text-white text-sm focus:outline-none focus:border-terracotta-500">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-stone-300 mb-1.5" data-i18n="lbl_email">Correu electrònic institucional *</label>
+                                <input type="email" required placeholder="urbanisme@ajuntament.cat" class="w-full px-4 py-2.5 rounded-xl bg-stone-900 border border-stone-700 text-white text-sm focus:outline-none focus:border-terracotta-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-stone-300 mb-1.5" data-i18n="lbl_area">Superfície aproximada (m²)</label>
+                                <input type="text" placeholder="Ex: 250 m² (Plaça / Parc nou)" class="w-full px-4 py-2.5 rounded-xl bg-stone-900 border border-stone-700 text-white text-sm focus:outline-none focus:border-terracotta-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-stone-300 mb-1.5" data-i18n="lbl_notes">Necessitats de l'espai (Ombra, joc infantil, accessibilitat...)</label>
+                            <textarea rows="3" placeholder="Descriu breument la situació actual de l'espai..." class="w-full px-4 py-2.5 rounded-xl bg-stone-900 border border-stone-700 text-white text-sm focus:outline-none focus:border-terracotta-500"></textarea>
+                        </div>
+
+                        <button type="submit" class="w-full py-3.5 px-6 rounded-xl bg-forest-600 hover:bg-forest-700 text-white font-bold text-sm shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            <span data-i18n="btn_submit">Enviar Sol·licitud Tècnica</span>
+                        </button>
+
+                        <div id="form-success" class="hidden p-4 rounded-xl bg-forest-900/90 border border-forest-600 text-forest-100 text-xs font-medium">
+                            <i class="fa-solid fa-circle-check text-forest-100 mr-1.5"></i>
+                            <span data-i18n="form_ok">Sol·licitud registrada! El nostre equip d'arquitectura modular es posarà en contacte amb el vostre ajuntament en menys de 24h.</span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="bg-stone-950 text-stone-400 py-8 border-t border-stone-800 text-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="font-bold text-white flex items-center gap-2">
+                <img src="Logo_CANPA_icono.png" alt="" class="h-7 w-auto">
+                <span>CANPA <span class="font-medium text-terracotta-500">Urban Design</span></span>
+                <span class="text-stone-400 font-normal">· Solucions Modulars amb Cementos Molins</span>
+            </div>
+            <div data-i18n="footer_copy">Dissenyat per a Ajuntaments i Espais Públics Resilients · Compliment Llei 15/2026</div>
+        </div>
+    </footer>
+
+    <!-- SCRIPTS: INTERNACIONALITZACIÓ (CAT/ESP), MOTOR 3D THREE.JS I EXPORTADOR STL REAL -->
+    <script>
+        // ==========================================
+        // 1. DICCIONARI BILINGÜE (CATALÀ / ESPAÑOL)
+        // ==========================================
+        const translations = {
+            ca: {
+                nav_sub: "Partner Industrial: Cementos Molins",
+                nav_value: "Serveis Municipals",
+                nav_studio: "Configurador 3D & STL",
+                nav_gallery: "Renders i Maquetes Pròpies",
+                nav_process: "Metodologia",
+                nav_contact: "Sol·licitar Pilot",
+                nav_cta: "Contacte",
+                hero_badge: "Infraestructura Urbana Sostenible · Llei 15/2026 i PMR",
+                hero_title: "Transformem places i parcs municipals en refugis climàtics sense obra civil pesada.",
+                hero_desc: "Dissenyem i subministrem sistemes modulars <strong>Plug & Play</strong> fabricats amb formigons eco-sostenibles de <strong>Cementos Molins</strong>. Dissenya l'espai en 3D, imprimeix la teva maqueta física a escala i executa la instal·lació en 48 hores.",
+                hero_btn_3d: "Obrir Configurador 3D i Maquetes",
+                hero_btn_dossier: "Demanar Dossier per a Licitació",
+                hero_card_header: "AVANTATGES PER A L'ADMINISTRACIÓ",
+                hero_kpi_1: "Estalvi en cost d'execució vs. obra tradicional",
+                hero_kpi_2: "Reducció de temperatura percebuda a l'estiu",
+                hero_kpi_3: "Compliment Llei 15/2026 i accessibilitat PMR",
+                hero_kpi_4: "Arxius llestos per imprimir maquetes a escala",
+                studio_tag: "EINA TÈCNICA MUNICIPAL · WEBGL 3D & IMPRESSIÓ STL",
+                studio_title: "Configurador d'Espais i Generador de Maquetes 3D",
+                studio_desc: "Selecciona els mòduls al panell esquerre, gira la càmera (arrossega amb el ratolí o dit) i alterna entre el render realista i el mode d'impressió 3D per descarregar el fitxer STL.",
+                mode_render: "Vista Render Realista",
+                mode_stl: "Mode Maqueta Impressió 3D / STL",
+                cat_title: "Catàleg Modular Plug & Play",
+                cat_reset: "Reiniciar",
+                custom_3d_title: "LES TEVES PECES I FOTOS",
+                btn_upload_stl: "Pujar Maqueta 3D",
+                btn_upload_bg: "Foto Espai Fons",
+                btn_remove_custom: "Treure",
+                lbl_custom_scale: "Escala peça",
+                lbl_custom_rot: "Rotació (°)",
+                bg_active_lbl: "Foto de l'espai activa",
+                gal_tag: "PORTAFOLI D'INTERVENCIÓ · ABANS I DESPRÉS",
+                gal_title: "Els vostres Renders i Fotos de Maquetes",
+                gal_desc: "Puja directament els renders que heu generat (parc infantil, pèrgoles, abans i després de Molins de Rei o fotos de la maqueta física) per presentar-los a l'ajuntament dins d'aquesta mateixa web.",
+                btn_add_renders: "Afegir els nostres Renders / Fotos",
+                gal_empty_title: "Carrega aquí els teus renders",
+                gal_empty_desc: "Selecciona una o diverses imatges (JPG, PNG, WEBP) del vostre parc infantil cobert, la comparativa Abans/Després o la maqueta física.",
+                gal_empty_cta: "Seleccionar arxius del dispositiu",
+                ba_before: "Abans",
+                ba_after: "Després",
+                ba_title: "Parc infantil: de pati al sol a plaça amb pèrgola vegetal",
+                ba_hint: "Arrossega per comparar",
+                mod_pergola_name: "Pèrgola Bioclimàtica Híbrida",
+                mod_pergola_sub: "Ferro + teles tensades + vegetació (4x4m)",
+                mod_bench_name: "Bancs Eco + Ping-Pong",
+                mod_bench_sub: "Formigó Cementos Molins + accés PMR",
+                mod_play_name: "Joc Infantil Inclusiu Cobert",
+                mod_play_sub: "Coberta climàtica + paviment amortidor",
+                mod_green_name: "Jardinera Drenant + Fanal Solar",
+                mod_green_sub: "Aromàtiques + fanal solar amb sensor i Wi-Fi",
+                stl_info: "Descarrega la geometria 3D exacta d'aquesta configuració en format <strong>.STL</strong> llest per laminar a Cura o PrusaSlicer (PLA/Resina).",
+                btn_export_stl: "Exportar Arxiu STL / Pack Maqueta 3D",
+                viewport_controls: "Arrossega per rotar 360° · Roda/Pessic per fer zoom",
+                calc_header: "CALCULADORA TÈCNICA EN TEMPS REAL (IMPACTE MUNICIPAL)",
+                calc_shade: "Superfície d'Ombra",
+                calc_shade_sub: "Protecció solar immediata",
+                calc_temp: "Reducció Tèrmica",
+                calc_temp_sub: "Mitigació illa de calor",
+                calc_co2: "Estalvi CO₂ Molins",
+                calc_co2_sub: "Formigó baixa petjada",
+                calc_cost: "Estalvi vs. Obra Civil",
+                calc_cost_sub: "Muntatge ràpid 48h",
+                qty_max: "màx.",
+                render_strip_label: "Disseny de referència",
+                model_own: "Model 3D propi",
+                model_remove: "Treure",
+                gal_card_sub: "CANPA UrbanKit · Disseny propi",
+                gal_general: "Proposta general",
+                proc_tag: "METODOLOGIA DE TREBALL B2G",
+                proc_title: "Com implementem CANPA UrbanKit al teu municipi",
+                proc_desc: "Un procés àgil pensat per als serveis tècnics municipals, regidories d'urbanisme i transició ecològica.",
+                step1_title: "Diagnòstic i Selecció Modular",
+                step1_desc: "Analitzem la plaça o parc municipal (exposició solar, manca d'ombra, fluxos de vianants i compliment d'accessibilitat Llei 15/2026) i seleccionem la combinació òptima de mòduls Plug & Play.",
+                step2_title: "Simulació 3D i Maqueta Física",
+                step2_desc: "Generem els renders integrats de l'abans i el després juntament amb l'arxiu <strong>STL a escala</strong> per imprimir la maqueta física. Ideal per validar el projecte amb alcaldia i processos participatius veïnals.",
+                step3_title: "Instal·lació Ràpida Plug & Play",
+                step3_desc: "Subministrament directe des de fàbrica amb prefabricats de <strong>Cementos Molins</strong>. Muntatge en sec en 48 hores sense excavacions ni runes, llest per a l'ús immediat de la ciutadania.",
+                form_tag: "CONTACTE INSTITUCIONAL",
+                form_title: "Sol·licita un Estudi Pilot Municipal",
+                form_desc: "Envia'ns les dades de l'espai on vols actuar i el nostre equip tècnic prepararà una proposta modular amb càlcul d'impacte climàtic i maqueta 3D.",
+                form_bullet1: "Compatible amb subvencions de refugis climàtics",
+                form_bullet2: "Documentació tècnica per a contractació pública",
+                form_bullet3: "Enviament de pack de mostres de materials Molins",
+                lbl_muni: "Ajuntament / Entitat Pública *",
+                lbl_role: "Càrrec / Departament *",
+                lbl_email: "Correu electrònic institucional *",
+                lbl_area: "Superfície aproximada (m²)",
+                lbl_notes: "Necessitats de l'espai (Ombra, joc infantil, accessibilitat...)",
+                btn_submit: "Enviar Sol·licitud Tècnica",
+                form_ok: "Sol·licitud registrada! El nostre equip d'arquitectura modular es posarà en contacte amb el vostre ajuntament en menys de 24h.",
+                footer_copy: "Dissenyat per a Ajuntaments i Espais Públics Resilients · Compliment Llei 15/2026"
+            },
+            es: {
+                nav_sub: "Partner Industrial: Cementos Molins",
+                nav_value: "Servicios Municipales",
+                nav_studio: "Configurador 3D & STL",
+                nav_gallery: "Renders y Maquetas Propias",
+                nav_process: "Metodología",
+                nav_contact: "Solicitar Piloto",
+                nav_cta: "Contacto",
+                hero_badge: "Infraestructura Urbana Sostenible · Ley 15/2026 y PMR",
+                hero_title: "Transformamos plazas y parques municipales en refugios climáticos sin obra civil pesada.",
+                hero_desc: "Diseñamos y suministramos sistemas modulares <strong>Plug & Play</strong> fabricados con hormigones eco-sostenibles de <strong>Cementos Molins</strong>. Configura el espacio en 3D, imprime tu maqueta física a escala y ejecuta la instalación en 48 horas.",
+                hero_btn_3d: "Abrir Configurador 3D y Maquetas",
+                hero_btn_dossier: "Pedir Dossier para Licitación",
+                hero_card_header: "VENTAJAS PARA LA ADMINISTRACIÓN",
+                hero_kpi_1: "Ahorro en coste de ejecución vs. obra tradicional",
+                hero_kpi_2: "Reducción de temperatura percibida en verano",
+                hero_kpi_3: "Cumplimiento Ley 15/2026 y accesibilidad PMR",
+                hero_kpi_4: "Archivos listos para imprimir maquetas a escala",
+                studio_tag: "HERRAMIENTA TÉCNICA MUNICIPAL · WEBGL 3D E IMPRESIÓN STL",
+                studio_title: "Configurador de Espacios y Generador de Maquetas 3D",
+                studio_desc: "Selecciona los módulos en el panel izquierdo, gira la cámara (arrastra con ratón o dedo) y alterna entre el render realista y el modo de impresión 3D para descargar el archivo STL.",
+                mode_render: "Vista Render Realista",
+                mode_stl: "Modo Maqueta Impresión 3D / STL",
+                cat_title: "Catálogo Modular Plug & Play",
+                cat_reset: "Reiniciar",
+                custom_3d_title: "TUS PIEZAS Y FOTOS",
+                btn_upload_stl: "Subir Maqueta 3D",
+                btn_upload_bg: "Foto Espacio Fondo",
+                btn_remove_custom: "Quitar",
+                lbl_custom_scale: "Escala pieza",
+                lbl_custom_rot: "Rotación (°)",
+                bg_active_lbl: "Foto del espacio activa",
+                gal_tag: "PORTAFOLIO DE INTERVENCIÓN · ANTES Y DESPUÉS",
+                gal_title: "Vuestros Renders y Fotos de Maquetas",
+                gal_desc: "Sube directamente los renders que habéis generado (parque infantil, pérgolas, antes y después de Molins de Rei o fotos de la maqueta física) para presentarlos al ayuntamiento dentro de esta misma web.",
+                btn_add_renders: "Añadir nuestros Renders / Fotos",
+                gal_empty_title: "Carga aquí tus renders",
+                gal_empty_desc: "Selecciona una o varias imágenes (JPG, PNG, WEBP) de vuestro parque infantil techado, la comparativa Antes/Después o la maqueta física.",
+                gal_empty_cta: "Seleccionar archivos del dispositivo",
+                ba_before: "Antes",
+                ba_after: "Después",
+                ba_title: "Parque infantil: de patio al sol a plaza con pérgola vegetal",
+                ba_hint: "Arrastra para comparar",
+                mod_pergola_name: "Pérgola Bioclimática Híbrida",
+                mod_pergola_sub: "Hierro + telas tensadas + vegetación (4x4m)",
+                mod_bench_name: "Bancos Eco + Ping-Pong",
+                mod_bench_sub: "Hormigón Cementos Molins + acceso PMR",
+                mod_play_name: "Juego Infantil Inclusivo Techado",
+                mod_play_sub: "Cubierta climática + pavimento amortiguador",
+                mod_green_name: "Jardinera Drenante + Farola Solar",
+                mod_green_sub: "Aromáticas + farola solar con sensor y Wi-Fi",
+                stl_info: "Descarga la geometría 3D exacta de esta configuración en formato <strong>.STL</strong> listo para laminar en Cura o PrusaSlicer (PLA/Resina).",
+                btn_export_stl: "Exportar Archivo STL / Pack Maqueta 3D",
+                viewport_controls: "Arrastra para rotar 360° · Rueda/Pellizco para hacer zoom",
+                calc_header: "CALCULADORA TÉCNICA EN TIEMPO REAL (IMPACTO MUNICIPAL)",
+                calc_shade: "Superficie de Sombra",
+                calc_shade_sub: "Protección solar inmediata",
+                calc_temp: "Reducción Térmica",
+                calc_temp_sub: "Mitigación isla de calor",
+                calc_co2: "Ahorro CO₂ Molins",
+                calc_co2_sub: "Hormigón baja huella",
+                calc_cost: "Ahorro vs. Obra Civil",
+                calc_cost_sub: "Montaje rápido 48h",
+                qty_max: "máx.",
+                render_strip_label: "Diseño de referencia",
+                model_own: "Modelo 3D propio",
+                model_remove: "Quitar",
+                gal_card_sub: "CANPA UrbanKit · Diseño propio",
+                gal_general: "Propuesta general",
+                proc_tag: "METODOLOGÍA DE TRABAJO B2G",
+                proc_title: "Cómo implementamos CANPA UrbanKit en tu municipio",
+                proc_desc: "Un proceso ágil pensado para los servicios técnicos municipales, concejalías de urbanismo y transición ecológica.",
+                step1_title: "Diagnóstico y Selección Modular",
+                step1_desc: "Analizamos la plaza o parque municipal (exposición solar, falta de sombra, flujos peatonales y cumplimiento de accesibilidad Ley 15/2026) y seleccionamos la combinación óptima de módulos Plug & Play.",
+                step2_title: "Simulación 3D y Maqueta Física",
+                step2_desc: "Generamos los renders integrados del antes y el después junto con el archivo <strong>STL a escala</strong> para imprimir la maqueta física. Ideal para validar el proyecto con alcaldía y procesos participativos vecinales.",
+                step3_title: "Instalación Rápida Plug & Play",
+                step3_desc: "Suministro directo desde fábrica con prefabricados de <strong>Cementos Molins</strong>. Montaje en seco en 48 horas sin excavaciones ni escombros, listo para el uso inmediato de la ciudadanía.",
+                form_tag: "CONTACTO INSTITUCIONAL",
+                form_title: "Solicita un Estudio Piloto Municipal",
+                form_desc: "Envíanos los datos del espacio donde quieres actuar y nuestro equipo técnico preparará una propuesta modular con cálculo de impacto climático y maqueta 3D.",
+                form_bullet1: "Compatible con subvenciones de refugios climáticos",
+                form_bullet2: "Documentación técnica para contratación pública",
+                form_bullet3: "Envío de pack de muestras de materiales Molins",
+                lbl_muni: "Ayuntamiento / Entidad Pública *",
+                lbl_role: "Cargo / Departamento *",
+                lbl_email: "Correo electrónico institucional *",
+                lbl_area: "Superficie aproximada (m²)",
+                lbl_notes: "Necesidades del espacio (Sombra, juego infantil, accesibilidad...)",
+                btn_submit: "Enviar Solicitud Técnica",
+                form_ok: "¡Solicitud registrada! Nuestro equipo de arquitectura modular se pondrá en contacto con vuestro ayuntamiento en menos de 24h.",
+                footer_copy: "Diseñado para Ayuntamientos y Espacios Públicos Resilientes · Cumplimiento Ley 15/2026"
+            }
+        };
+
+        let currentLang = 'ca';
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang;
+
+            // Estils botons idioma
+            const btnCa = document.getElementById('lang-ca');
+            const btnEs = document.getElementById('lang-es');
+            if (lang === 'ca') {
+                btnCa.className = "px-2.5 py-1 rounded-md bg-white text-stone-900 shadow-xs transition-all cursor-pointer";
+                btnEs.className = "px-2.5 py-1 rounded-md text-stone-500 hover:text-stone-900 transition-all cursor-pointer";
+            } else {
+                btnEs.className = "px-2.5 py-1 rounded-md bg-white text-stone-900 shadow-xs transition-all cursor-pointer";
+                btnCa.className = "px-2.5 py-1 rounded-md text-stone-500 hover:text-stone-900 transition-all cursor-pointer";
+            }
+
+            // Traduir textos
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.innerHTML = translations[lang][key];
+                }
+            });
+
+            renderModuleList();
+            renderPreloadedGallery();
+            updateRenderStrip();
+            updateViewportBadge();
+            updateMetrics();
+        }
+
+        // ==========================================
+        // 2. ESTAT DEL CONFIGURADOR MODULAR
+        // ==========================================
+        let modulesState = {
+            pergola: 2,
+            bench: 2,
+            play: 1,
+            green: 2
+        };
+
+        let renderMode = 'realistic'; // 'realistic' | 'stl'
+
+        // ------------------------------------------------------------------
+        // CATÀLEG DE MÒDULS
+        // ------------------------------------------------------------------
+        const MODULE_CATALOG = [
+            {
+                key: 'pergola', max: 4,
+                image: 'ToldoVerde_Design.png', footprint: 4,
+                icon: 'fa-umbrella-beach', tone: 'forest',
+                metric: { ca: '+16 m² ombra · -1,2 °C', es: '+16 m² sombra · -1,2 °C' }
+            },
+            {
+                key: 'bench', max: 4,
+                image: 'MesaPicnicAptaSillaRuedas_Design.png', footprint: 3.2,
+                icon: 'fa-table-tennis-paddle-ball', tone: 'terracotta',
+                metric: { ca: 'CO₂ -380 kg · PMR', es: 'CO₂ -380 kg · PMR' }
+            },
+            {
+                key: 'play', max: 2,
+                image: null, footprint: 5,
+                icon: 'fa-child-reaching', tone: 'amber',
+                metric: { ca: '+24 m² ombra · 365 dies', es: '+24 m² sombra · 365 días' }
+            },
+            {
+                key: 'green', max: 6,
+                image: ['Farola_Design.jfif', 'BancosVerdes_Design.png'], footprint: 1.6,
+                icon: 'fa-solar-panel', tone: 'emerald',
+                metric: { ca: 'Solar · Sensor IoT · Wi-Fi', es: 'Solar · Sensor IoT · Wi-Fi' }
+            }
+        ];
+
+        const TONE_CLASSES = {
+            forest:     'bg-forest-100 text-forest-700',
+            terracotta: 'bg-terracotta-100 text-terracotta-700',
+            amber:      'bg-terracotta-100 text-terracotta-700',
+            emerald:    'bg-territori-100 text-territori-700'
+        };
+
+        function t(key) {
+            return (translations[currentLang] && translations[currentLang][key]) || key;
+        }
+
+        function moduleImages(m) {
+            return [].concat(m.image || []);
+        }
+
+        function openModuleImage(key, index) {
+            const mod = MODULE_CATALOG.find(m => m.key === key);
+            const src = moduleImages(mod)[index];
+            if (src) openLightbox(src, t('mod_' + key + '_name'));
+        }
+
+        function renderModuleList() {
+            const list = document.getElementById('module-list');
+            if (!list) return;
+            list.innerHTML = MODULE_CATALOG.map(m => {
+                const segments = Array.from({ length: m.max }, (_, i) =>
+                    `<button type="button" class="qty-seg" data-type="${m.key}" data-value="${i + 1}"
+                        onclick="setModuleCount('${m.key}', ${i + 1})"
+                        aria-label="${i + 1}"></button>`).join('');
+                return `
+                <div class="module-card" id="card-${m.key}" role="listitem">
+                    <div class="flex items-start gap-3">
+                        ${moduleImages(m).length
+                            ? `<div class="module-thumb ${moduleImages(m).length > 1 ? 'is-split' : ''}">
+                                   ${moduleImages(m).map((src, i) => `<button type="button" onclick="openModuleImage('${m.key}', ${i})" aria-label="${t('mod_' + m.key + '_name')} (${i + 1})">
+                                       <img src="${src}" alt="" loading="lazy">
+                                   </button>`).join('')}
+                               </div>`
+                            : `<div class="w-14 h-14 rounded-xl ${TONE_CLASSES[m.tone]} flex items-center justify-center shrink-0 text-lg">
+                                   <i class="fa-solid ${m.icon}"></i>
+                               </div>`}
+                        <div class="min-w-0 flex-1">
+                            <h4 class="font-bold text-sm text-stone-900 leading-tight">${t('mod_' + m.key + '_name')}</h4>
+                            <p class="text-[11px] text-stone-500 mt-0.5">${t('mod_' + m.key + '_sub')}</p>
+                            <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
+                                <span class="text-[10px] font-mono font-semibold text-forest-700 bg-forest-50 px-1.5 py-0.5 rounded">${m.metric[currentLang]}</span>
+                                <input type="file" id="model-input-${m.key}" accept=".stl,.obj,.glb,.gltf" class="hidden" onchange="handleModuleModelUpload('${m.key}', event)">
+                                ${moduleModels[m.key]
+                                    ? `<span class="text-[10px] font-semibold text-stone-900 bg-terracotta-500 px-1.5 py-0.5 rounded inline-flex items-center gap-1 max-w-[140px]" title="${moduleModels[m.key].name}">
+                                           <i class="fa-solid fa-cube"></i><span class="truncate">${moduleModels[m.key].name}</span>
+                                       </span>
+                                       <button type="button" onclick="removeModuleModel('${m.key}')" class="text-[10px] font-bold text-terracotta-700 hover:underline cursor-pointer">${t('model_remove')}</button>`
+                                    : `<button type="button" onclick="document.getElementById('model-input-${m.key}').click()" class="text-[10px] font-semibold text-stone-600 hover:text-forest-700 border border-dashed border-stone-300 hover:border-forest-600 px-1.5 py-0.5 rounded inline-flex items-center gap-1 cursor-pointer">
+                                           <i class="fa-solid fa-upload"></i>${t('model_own')}
+                                       </button>`}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 flex items-center gap-3">
+                        <div class="qty-stepper" role="group" aria-label="${t('mod_' + m.key + '_name')}">
+                            <button type="button" class="qty-btn" id="dec-${m.key}" onclick="changeModuleCount('${m.key}', -1)" aria-label="-1">
+                                <i class="fa-solid fa-minus"></i>
+                            </button>
+                            <output id="qty-${m.key}" class="qty-value" aria-live="polite">0</output>
+                            <button type="button" class="qty-btn qty-btn-plus" id="inc-${m.key}" onclick="changeModuleCount('${m.key}', 1)" aria-label="+1">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="qty-segments">${segments}</div>
+                            <div class="mt-1 text-[10px] font-mono text-stone-400">${t('qty_max')} ${m.max}</div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+            MODULE_CATALOG.forEach(m => syncModuleUI(m.key, false));
+        }
+
+        function syncModuleUI(type, animate = true) {
+            const mod = MODULE_CATALOG.find(m => m.key === type);
+            const qty = modulesState[type];
+            const qtyEl = document.getElementById(`qty-${type}`);
+            if (!qtyEl) return;
+            qtyEl.textContent = qty;
+            if (animate) {
+                qtyEl.classList.remove('qty-bump');
+                void qtyEl.offsetWidth;
+                qtyEl.classList.add('qty-bump');
+            }
+            document.getElementById(`dec-${type}`).disabled = qty <= 0;
+            document.getElementById(`inc-${type}`).disabled = qty >= mod.max;
+            document.getElementById(`card-${type}`).classList.toggle('is-active', qty > 0);
+            document.querySelectorAll(`.qty-seg[data-type="${type}"]`).forEach(seg => {
+                seg.classList.toggle('is-on', Number(seg.dataset.value) <= qty);
+            });
+        }
+
+        function setModuleCount(type, value) {
+            const mod = MODULE_CATALOG.find(m => m.key === type);
+            // Clicar el segment actiu el desactiva (permet tornar a 0 ràpidament)
+            if (value === modulesState[type] && value === 1) value = 0;
+            const next = Math.max(0, Math.min(mod.max, value));
+            if (next === modulesState[type]) return;
+            modulesState[type] = next;
+            syncModuleUI(type);
+            rebuild3DScene();
+            updateMetrics();
+        }
+
+        function changeModuleCount(type, delta) {
+            setModuleCount(type, modulesState[type] + delta);
+        }
+
+        // ------------------------------------------------------------------
+        // MODELS 3D PROPIS PER MÒDUL (.STL / .OBJ / .GLB / .GLTF)
+        // Substitueixen la geometria per defecte del mòdul a l'escena i a l'STL.
+        // ------------------------------------------------------------------
+        const moduleModels = {}; // key -> { object: THREE.Group normalitzat, name }
+
+        function readModelFile(file) {
+            return new Promise((resolve, reject) => {
+                const ext = file.name.split('.').pop().toLowerCase();
+                const reader = new FileReader();
+                reader.onerror = reject;
+                reader.onload = (e) => {
+                    try {
+                        const data = e.target.result;
+                        if (ext === 'stl') {
+                            const geometry = new THREE.STLLoader().parse(data);
+                            geometry.computeVertexNormals();
+                            const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0xb5b2aa, roughness: 0.6 }));
+                            mesh.rotation.x = -Math.PI / 2; // Z-up (CAD) -> Y-up
+                            resolve(mesh);
+                        } else if (ext === 'obj') {
+                            resolve(new THREE.OBJLoader().parse(data));
+                        } else if (ext === 'glb' || ext === 'gltf') {
+                            new THREE.GLTFLoader().parse(data, '', (gltf) => resolve(gltf.scene), reject);
+                        } else {
+                            reject(new Error('format'));
+                        }
+                    } catch (err) {
+                        reject(err);
+                    }
+                };
+                if (ext === 'obj' || ext === 'gltf') reader.readAsText(file);
+                else reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // Escala el model perquè ocupi la planta del mòdul i el centra sobre el terra
+        function normalizeModel(object, footprint) {
+            const wrapper = new THREE.Group();
+            wrapper.add(object);
+            let box = new THREE.Box3().setFromObject(wrapper);
+            const size = new THREE.Vector3();
+            box.getSize(size);
+            const planDim = Math.max(size.x, size.z) || 1;
+            object.scale.multiplyScalar(footprint / planDim);
+
+            box = new THREE.Box3().setFromObject(wrapper);
+            const center = new THREE.Vector3();
+            box.getCenter(center);
+            object.position.x -= center.x;
+            object.position.z -= center.z;
+            object.position.y -= box.min.y;
+
+            wrapper.traverse((n) => {
+                if (n.isMesh) { n.castShadow = true; n.receiveShadow = true; }
+            });
+            return wrapper;
+        }
+
+        function buildModule(key, mats, factory) {
+            const custom = moduleModels[key];
+            if (!custom) return factory(mats);
+            const instance = custom.object.clone(true);
+            if (renderMode === 'stl') {
+                instance.traverse((n) => { if (n.isMesh) n.material = mats.concrete; });
+            }
+            return instance;
+        }
+
+        async function handleModuleModelUpload(key, event) {
+            const file = event.target.files[0];
+            event.target.value = '';
+            if (!file) return;
+            const mod = MODULE_CATALOG.find(m => m.key === key);
+            try {
+                const object = await readModelFile(file);
+                moduleModels[key] = { object: normalizeModel(object, mod.footprint), name: file.name };
+                if (modulesState[key] === 0) modulesState[key] = 1;
+                renderModuleList();
+                rebuild3DScene();
+                updateMetrics();
+                showToast(currentLang === 'ca'
+                    ? `Model propi aplicat a «${t('mod_' + key + '_name')}»`
+                    : `Modelo propio aplicado a «${t('mod_' + key + '_name')}»`);
+            } catch (err) {
+                console.error(err);
+                showToast(currentLang === 'ca'
+                    ? "No s'ha pogut llegir el model. Formats: .STL, .OBJ, .GLB o .GLTF (amb textures incrustades)."
+                    : "No se ha podido leer el modelo. Formatos: .STL, .OBJ, .GLB o .GLTF (con texturas incrustadas).");
+            }
+        }
+
+        function removeModuleModel(key) {
+            delete moduleModels[key];
+            renderModuleList();
+            rebuild3DScene();
+        }
+
+        // ------------------------------------------------------------------
+        // GALERIA DE RENDERS PROPIS (imatges de la carpeta del projecte)
+        // Per afegir-ne o canviar-ne: edita aquesta llista. `src` és la ruta
+        // relativa a aquest HTML; `module` enllaça amb el catàleg (o null).
+        // ------------------------------------------------------------------
+        const GALLERY_RENDERS = [
+            { src: 'ToldoVerde_Design.png', module: 'pergola',
+              ca: 'Pèrgola de formigó amb trepadores i nebulització', es: 'Pérgola de hormigón con trepadoras y nebulización' },
+            { src: 'CubiertaAgua_Design.png', module: 'pergola',
+              ca: "Coberta de volta amb captació d'aigua de pluja", es: 'Cubierta de bóveda con captación de agua de lluvia' },
+            { src: 'BancoLuminoso-U_Design.jfif', module: 'bench',
+              ca: 'Banc lluminós en U', es: 'Banco luminoso en U' },
+            { src: 'BancoLuminoso-Z_Design.jfif', module: 'bench',
+              ca: 'Banc lluminós en Z', es: 'Banco luminoso en Z' },
+            { src: 'MesaPicnicAptaSillaRuedas_Design.png', module: 'bench',
+              ca: 'Taula de pícnic accessible per a cadira de rodes', es: 'Mesa de pícnic accesible para silla de ruedas' },
+            { src: 'MesaRedondaAptaSillaRuedas_Design.png', module: 'bench',
+              ca: 'Taula rodona accessible per a cadira de rodes', es: 'Mesa redonda accesible para silla de ruedas' },
+            { src: 'BancosVerdes_Design.png', module: 'green',
+              ca: 'Banc-jardinera amb plantes aromàtiques', es: 'Banco-jardinera con plantas aromáticas' },
+            { src: 'Farola_Design.jfif', module: 'green',
+              ca: 'Fanal corbat de formigó amb nebulització', es: 'Farola curva de hormigón con nebulización' },
+            { src: 'PlazaAtardecer_Design.png', module: null,
+              ca: 'Plaça al capvespre: fanals, bancs lluminosos i jardineres', es: 'Plaza al atardecer: farolas, bancos luminosos y jardineras' },
+            { src: 'ParqueMolins_VistaDron_After.png', module: 'play',
+              ca: 'Pèrgola vegetal sobre el parc infantil (proposta)', es: 'Pérgola vegetal sobre el parque infantil (propuesta)' },
+            { src: 'ParqueMolins_VistaDron_Before.jfif', module: null,
+              ca: 'Parc infantil: estat actual sense ombra', es: 'Parque infantil: estado actual sin sombra' },
+            { src: 'render.png', module: null,
+              ca: 'Plaça amb fonts i tòtems IoT', es: 'Plaza con fuentes y tótems IoT' }
+        ];
+
+        function createGalleryCard(src, title, tag, preloaded) {
+            const card = document.createElement('div');
+            card.className = 'gallery-card group bg-white rounded-3xl border border-stone-200 overflow-hidden shadow-xs hover:shadow-lg transition-all flex flex-col'
+                + (preloaded ? ' is-preloaded' : '');
+
+            const media = document.createElement('button');
+            media.type = 'button';
+            media.className = 'relative aspect-[4/3] bg-[#F4F6F0] overflow-hidden cursor-zoom-in block w-full';
+            media.addEventListener('click', () => openLightbox(src, titleInput.value));
+
+            const img = document.createElement('img');
+            img.src = src;
+            img.alt = title;
+            img.loading = 'lazy';
+            img.className = 'w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300';
+            media.appendChild(img);
+
+            const expand = document.createElement('span');
+            expand.className = 'absolute top-3 right-3 bg-stone-900/80 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1';
+            expand.innerHTML = '<i class="fa-solid fa-expand"></i>';
+            media.appendChild(expand);
+
+            if (tag) {
+                const chip = document.createElement('span');
+                chip.className = 'absolute top-3 left-3 bg-forest-700 text-white text-[10px] font-bold px-2 py-1 rounded-lg';
+                chip.textContent = tag;
+                media.appendChild(chip);
+            }
+
+            const footer = document.createElement('div');
+            footer.className = 'p-4 flex items-center justify-between gap-2 border-t border-stone-100';
+            const info = document.createElement('div');
+            info.className = 'min-w-0 flex-1';
+            const titleInput = document.createElement('input');
+            titleInput.type = 'text';
+            titleInput.value = title;
+            titleInput.title = currentLang === 'ca' ? 'Clica per editar el títol' : 'Haz clic para editar el título';
+            titleInput.className = 'font-bold text-sm text-stone-900 bg-transparent border-b border-transparent focus:border-forest-600 focus:outline-none w-full truncate';
+            const sub = document.createElement('span');
+            sub.className = 'text-[11px] text-stone-500 block mt-0.5';
+            sub.textContent = t('gal_card_sub');
+            info.append(titleInput, sub);
+
+            const del = document.createElement('button');
+            del.type = 'button';
+            del.className = 'text-stone-400 hover:text-terracotta-700 p-2 rounded-lg cursor-pointer';
+            del.title = currentLang === 'ca' ? 'Eliminar' : 'Eliminar';
+            del.innerHTML = '<i class="fa-solid fa-trash-can text-xs"></i>';
+            del.addEventListener('click', () => card.remove());
+
+            footer.append(info, del);
+            card.append(media, footer);
+            return card;
+        }
+
+        function renderPreloadedGallery() {
+            const grid = document.getElementById('custom-renders-grid');
+            if (!grid) return;
+            grid.querySelectorAll('.is-preloaded').forEach(el => el.remove());
+            const anchor = grid.firstElementChild;
+            GALLERY_RENDERS.forEach(r => {
+                const tag = r.module ? t('mod_' + r.module + '_name') : t('gal_general');
+                grid.insertBefore(createGalleryCard(r.src, r[currentLang], tag, true), anchor);
+            });
+        }
+
+        function resetScene() {
+            modulesState = { pergola: 2, bench: 2, play: 1, green: 2 };
+            MODULE_CATALOG.forEach(m => syncModuleUI(m.key, false));
+            removeCustomModel();
+            removeCustomBackdrop();
+            rebuild3DScene();
+            updateMetrics();
+        }
+
+        function setRenderMode(mode) {
+            renderMode = mode;
+            const btnReal = document.getElementById('btn-mode-realistic');
+            const btnStl = document.getElementById('btn-mode-stl');
+            const stlBadge = document.getElementById('stl-dimensions-badge');
+
+            if (mode === 'realistic') {
+                btnReal.className = "mode-btn-active px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer";
+                btnStl.className = "px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-stone-700 hover:bg-stone-100 flex items-center gap-2 transition-all cursor-pointer";
+                stlBadge.classList.add('hidden');
+            } else {
+                btnStl.className = "mode-btn-active px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer";
+                btnReal.className = "px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-stone-700 hover:bg-stone-100 flex items-center gap-2 transition-all cursor-pointer";
+                stlBadge.classList.remove('hidden');
+            }
+
+            updateViewportBadge();
+            rebuild3DScene();
+        }
+
+        function updateViewportBadge() {
+            const titleEl = document.getElementById('viewport-badge-title');
+            if (renderMode === 'realistic') {
+                titleEl.textContent = currentLang === 'ca' 
+                    ? "Vista Render Realista · Il·luminació Solar i Formigó Molins" 
+                    : "Vista Render Realista · Iluminación Solar y Hormigón Molins";
+            } else {
+                titleEl.textContent = currentLang === 'ca' 
+                    ? "Mode Maqueta Impressió 3D · Malla Sòlida PLA / Resina" 
+                    : "Modo Maqueta Impresión 3D · Malla Sólida PLA / Resina";
+            }
+        }
+
+        function updateMetrics() {
+            const total = modulesState.pergola + modulesState.bench + modulesState.play + modulesState.green;
+            const shade = (modulesState.pergola * 16) + (modulesState.play * 24);
+            const temp = ((modulesState.pergola * 1.2) + (modulesState.play * 0.9) + (modulesState.green * 0.15)).toFixed(1);
+            const co2 = (modulesState.pergola * 420) + (modulesState.bench * 380) + (modulesState.play * 240);
+            const savings = total > 0 ? Math.min(40, 26 + total * 2) : 0;
+
+            document.getElementById('val-shade').textContent = `${shade} m²`;
+            document.getElementById('val-temp').textContent = total > 0 ? `-${temp} °C` : '0.0 °C';
+            document.getElementById('val-co2').textContent = `${co2.toLocaleString('ca-ES')} kg`;
+            document.getElementById('val-savings').textContent = `${savings}%`;
+
+            document.getElementById('total-modules-label').textContent = currentLang === 'ca'
+                ? `${total} mòduls actius a l'escena`
+                : `${total} módulos activos en la escena`;
+
+        }
+
+        // ==========================================
+        // 3. MOTOR 3D INTERACTIU AMB THREE.JS
+        // ==========================================
+        let scene, camera, renderer, plazaGroup, skyTexture = null;
+        let customModelMesh = null;
+        let customBaseScale = 1;
+        let customBackdropMesh = null;
+        let isDragging = false;
+        let userInteracted = false;
+        const sceneClock = new THREE.Clock();
+        let prevMouse = { x: 0, y: 0 };
+        let cameraAngle = { theta: Math.PI / 4, phi: Math.PI / 3.2, radius: 24 };
+
+        function initThreeJS() {
+            const container = document.getElementById('canvas-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            scene = new THREE.Scene();
+            skyTexture = makeCanvasTexture(16, 256, (ctx, w, h) => {
+                const grd = ctx.createLinearGradient(0, 0, 0, h);
+                grd.addColorStop(0, '#9fc3dc');
+                grd.addColorStop(0.6, '#dbe8ee');
+                grd.addColorStop(1, '#eef1ed');
+                ctx.fillStyle = grd;
+                ctx.fillRect(0, 0, w, h);
+            });
+
+            camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 200);
+            updateCameraPosition();
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.0;
+            container.appendChild(renderer.domElement);
+
+            // Llums
+            const hemiLight = new THREE.HemisphereLight(0xdfeeff, 0x8a7f6a, 0.6);
+            scene.add(hemiLight);
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.12);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xfff1dc, 1.35);
+            dirLight.shadow.bias = -0.0005;
+            dirLight.shadow.normalBias = 0.02;
+            dirLight.position.set(16, 26, 14);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            dirLight.shadow.camera.near = 2;
+            dirLight.shadow.camera.far = 65;
+            const d = 18;
+            dirLight.shadow.camera.left = -d;
+            dirLight.shadow.camera.right = d;
+            dirLight.shadow.camera.top = d;
+            dirLight.shadow.camera.bottom = -d;
+            scene.add(dirLight);
+
+            plazaGroup = new THREE.Group();
+            scene.add(plazaGroup);
+
+            rebuild3DScene();
+            setupOrbitControls(container);
+
+            window.addEventListener('resize', onWindowResize);
+            animate();
+        }
+
+        function updateCameraPosition() {
+            camera.position.x = cameraAngle.radius * Math.sin(cameraAngle.phi) * Math.cos(cameraAngle.theta);
+            camera.position.y = cameraAngle.radius * Math.cos(cameraAngle.phi);
+            camera.position.z = cameraAngle.radius * Math.sin(cameraAngle.phi) * Math.sin(cameraAngle.theta);
+            camera.lookAt(0, 0.8, 0);
+        }
+
+        function setupOrbitControls(domElement) {
+            domElement.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                userInteracted = true;
+                prevMouse = { x: e.clientX, y: e.clientY };
+            });
+            window.addEventListener('mouseup', () => { isDragging = false; });
+            window.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const dx = e.clientX - prevMouse.x;
+                const dy = e.clientY - prevMouse.y;
+                cameraAngle.theta -= dx * 0.008;
+                cameraAngle.phi = Math.max(0.25, Math.min(Math.PI / 2.1, cameraAngle.phi - dy * 0.008));
+                updateCameraPosition();
+                prevMouse = { x: e.clientX, y: e.clientY };
+            });
+
+            // Zoom amb roda
+            domElement.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                userInteracted = true;
+                cameraAngle.radius = Math.max(11, Math.min(42, cameraAngle.radius + e.deltaY * 0.015));
+                updateCameraPosition();
+            }, { passive: false });
+
+            // Suport tàctil (mòbil / tauleta)
+            domElement.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    isDragging = true;
+                    userInteracted = true;
+                userInteracted = true;
+                    prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                }
+            }, { passive: true });
+            window.addEventListener('touchend', () => { isDragging = false; });
+            domElement.addEventListener('touchmove', (e) => {
+                if (!isDragging || e.touches.length !== 1) return;
+                const dx = e.touches[0].clientX - prevMouse.x;
+                const dy = e.touches[0].clientY - prevMouse.y;
+                cameraAngle.theta -= dx * 0.01;
+                cameraAngle.phi = Math.max(0.25, Math.min(Math.PI / 2.1, cameraAngle.phi - dy * 0.01));
+                updateCameraPosition();
+                prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }, { passive: true });
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('canvas-container');
+            if (!container || !renderer) return;
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        // Materials segons el mode (Render Realista vs Maqueta Impressió 3D PLA)
+        // Converteix els colors hex (sRGB) a lineal, necessari amb outputEncoding sRGB
+        function toLinear(mats) {
+            const seen = new Set();
+            Object.values(mats).forEach(m => {
+                if (seen.has(m)) return;
+                seen.add(m);
+                if (m.color) m.color.convertSRGBToLinear();
+                if (m.emissive) m.emissive.convertSRGBToLinear();
+            });
+            return mats;
+        }
+
+        function getMaterials() {
+            return toLinear(buildMaterials());
+        }
+
+        function buildMaterials() {
+            if (renderMode === 'stl') {
+                // Estètica de filament PLA blanc/gris tècnic
+                const plaBase = new THREE.MeshStandardMaterial({ color: 0xd6d3cd, roughness: 0.45, metalness: 0.05 });
+                const plaModel = new THREE.MeshStandardMaterial({ color: 0xf4f3ef, roughness: 0.35, metalness: 0.05, side: THREE.DoubleSide });
+                const plaAccent = new THREE.MeshStandardMaterial({ color: 0xc2beb6, roughness: 0.4, metalness: 0.05 });
+                return {
+                    ground: plaBase,
+                    concrete: plaModel, concreteDark: plaAccent, vault: plaModel, tableTop: plaModel,
+                    steel: plaAccent, canopy: plaModel, solar: plaAccent, led: plaModel, wifi: plaAccent,
+                    foliage: plaAccent, foliageLight: plaAccent, flower: plaAccent, soil: plaAccent,
+                    playRoof: plaModel, playFloor: plaAccent, playAccent: plaAccent, wood: plaAccent
+                };
+            }
+            return {
+                ground: new THREE.MeshStandardMaterial({ map: getPavingTexture(), roughness: 0.9 }),
+                concrete: new THREE.MeshStandardMaterial({ color: 0xc6bfb2, roughness: 0.85 }),
+                concreteDark: new THREE.MeshStandardMaterial({ color: 0x9d988e, roughness: 0.9 }),
+                vault: new THREE.MeshStandardMaterial({ color: 0xd8d1c4, roughness: 0.8, side: THREE.DoubleSide }),
+                tableTop: new THREE.MeshStandardMaterial({ color: 0x2f5d50, roughness: 0.55 }),
+                steel: new THREE.MeshStandardMaterial({ color: 0x7a7872, roughness: 0.45, metalness: 0.35 }),
+                canopy: new THREE.MeshStandardMaterial({ color: 0xf5f3ee, roughness: 0.6 }),
+                solar: new THREE.MeshStandardMaterial({ color: 0x1d2c48, roughness: 0.25, metalness: 0.5 }),
+                wifi: new THREE.MeshStandardMaterial({ color: 0x8fd0ff, emissive: 0x3fa9f5, emissiveIntensity: 1.6 }),
+                led: new THREE.MeshStandardMaterial({ color: 0xffe2a8, emissive: 0xffc56b, emissiveIntensity: 1.4 }),
+                foliage: new THREE.MeshStandardMaterial({ color: 0x3f6b36, roughness: 0.85, flatShading: true }),
+                foliageLight: new THREE.MeshStandardMaterial({ color: 0x6f8f55, roughness: 0.85, flatShading: true }),
+                flower: new THREE.MeshStandardMaterial({ color: 0x8e6bbf, roughness: 0.7 }),
+                soil: new THREE.MeshStandardMaterial({ color: 0x5a4636, roughness: 1 }),
+                playRoof: new THREE.MeshStandardMaterial({ color: 0xd46b48, roughness: 0.5 }),
+                playFloor: new THREE.MeshStandardMaterial({ color: 0x5f8f6a, roughness: 0.95 }),
+                playAccent: new THREE.MeshStandardMaterial({ color: 0xf4a261, roughness: 0.6 }),
+                wood: new THREE.MeshStandardMaterial({ color: 0xa87b52, roughness: 0.75 })
+            };
+        }
+
+        function rebuild3DScene() {
+            // Netejar escena anterior
+            while (plazaGroup.children.length > 0) {
+                plazaGroup.remove(plazaGroup.children[0]);
+            }
+
+            updateEnvironment();
+            const mats = getMaterials();
+
+            // Base de la plaça (Peanya de maqueta / Paviment drenant Molins)
+            const baseGeo = new THREE.BoxGeometry(22, 0.4, 16);
+            const baseMesh = new THREE.Mesh(baseGeo, mats.ground);
+            baseMesh.position.y = -0.2;
+            baseMesh.receiveShadow = true;
+            plazaGroup.add(baseMesh);
+
+            // Graella arquitectònica sobre la base
+            if (renderMode === 'stl') {
+                const gridHelper = new THREE.GridHelper(22, 22, 0x888888, 0xaaaaaa);
+                gridHelper.position.y = 0.01;
+                plazaGroup.add(gridHelper);
+            }
+
+            // Re-afegir el model 3D propi (.STL / .OBJ) si l'usuari n'ha carregat un
+            if (customModelMesh) {
+                const customMat = renderMode === 'stl'
+                    ? new THREE.MeshStandardMaterial({ color: 0xf4f3ef, roughness: 0.35, metalness: 0.05 })
+                    : new THREE.MeshStandardMaterial({ color: 0xd46b48, roughness: 0.45, metalness: 0.1 });
+                customModelMesh.traverse((node) => {
+                    if (node.isMesh) {
+                        node.material = customMat;
+                        node.castShadow = true;
+                        node.receiveShadow = true;
+                    }
+                });
+                plazaGroup.add(customModelMesh);
+            }
+
+            // Re-afegir el panell fotogràfic de fons de l'espai real si n'hi ha un
+            if (customBackdropMesh) {
+                plazaGroup.add(customBackdropMesh);
+            }
+
+            // 1. Pèrgoles Bioclimàtiques (Posicions esquerra/centre)
+            const pergolaPositions = [
+                { x: -7, z: -3.5 },
+                { x: -7, z: 3.5 },
+                { x: -2.5, z: -3.5 },
+                { x: -2.5, z: 3.5 }
+            ];
+            for (let i = 0; i < modulesState.pergola; i++) {
+                const pos = pergolaPositions[i];
+                const pGroup = buildModule('pergola', mats, createPergolaMesh);
+                pGroup.position.set(pos.x, 0, pos.z);
+                plazaGroup.add(pGroup);
+            }
+
+            // 2. Bancs Eco Molins + Taules de Ping-Pong
+            // Sota les pèrgoles: cada unitat és una combinació diferent dels renders
+            const benchPositions = [
+                { x: -7, z: -3.5 },
+                { x: -7, z: 3.5 },
+                { x: -2.5, z: -3.5 },
+                { x: -2.5, z: 3.5 }
+            ];
+            for (let i = 0; i < modulesState.bench; i++) {
+                const pos = benchPositions[i];
+                const bGroup = buildModule('bench', mats, (m) => createBenchVariant(m, i));
+                if (pos.z > 0) bGroup.rotation.y = Math.PI;
+                bGroup.position.set(pos.x, 0, pos.z);
+                plazaGroup.add(bGroup);
+            }
+
+            // 3. Parc Infantil Inclusiu Cobert
+            const playPositions = [
+                { x: 6.6, z: -3.4 },
+                { x: 6.6, z: 3.4 }
+            ];
+            for (let i = 0; i < modulesState.play; i++) {
+                const pos = playPositions[i];
+                const playGroup = buildModule('play', mats, createPlaygroundMesh);
+                playGroup.position.set(pos.x, 0, pos.z);
+                plazaGroup.add(playGroup);
+            }
+
+            // 4. Jardineres Drenants + Fanals Solars
+            const greenPositions = [
+                { x: -9.6, z: -7.1 },
+                { x: -9.6, z: 7.1 },
+                { x: 1.6, z: -7.1 },
+                { x: 1.6, z: 7.1 },
+                { x: 9.6, z: -7.1 },
+                { x: 9.6, z: 7.1 }
+            ];
+            for (let i = 0; i < modulesState.green; i++) {
+                const pos = greenPositions[i];
+                const gGroup = buildModule('green', mats, createPlanterAndLampMesh);
+                gGroup.position.set(pos.x, 0, pos.z);
+                gGroup.rotation.y = pos.z > 0 ? Math.PI : 0; // el seient mira cap a la plaça
+                plazaGroup.add(gGroup);
+            }
+
+            updateRenderStrip();
+        }
+
+        function updateRenderStrip() {
+            const strip = document.getElementById('render-strip');
+            if (!strip || typeof GALLERY_RENDERS === 'undefined') return;
+            const items = GALLERY_RENDERS.filter(r => r.module && modulesState[r.module] > 0);
+            strip.classList.toggle('hidden', renderMode === 'stl' || items.length === 0);
+            strip.innerHTML = `<span class="render-strip-label">${t('render_strip_label')}</span>`;
+            items.forEach(r => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'render-thumb';
+                btn.title = r[currentLang];
+                btn.innerHTML = `<img src="${r.src}" alt="" loading="lazy">`;
+                btn.addEventListener('click', () => openLightbox(r.src, r[currentLang]));
+                strip.appendChild(btn);
+            });
+        }
+
+        // ------------------------------------------------------------------
+        // Constructors de geometries modulars (inspirats en els dissenys propis
+        // de CANPA: ToldoVerde, BancoLuminoso-Z, CubiertaAgua i BancosVerdes).
+        // Aptes tant per al render realista com per exportar a STL.
+        // ------------------------------------------------------------------
+        function seededRandom(seed) {
+            let s = seed;
+            return () => {
+                s = (s * 16807) % 2147483647;
+                return (s - 1) / 2147483646;
+            };
+        }
+
+        function addBox(group, w, h, d, mat, x, y, z) {
+            const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+            mesh.position.set(x, y, z);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            group.add(mesh);
+            return mesh;
+        }
+
+        // Pèrgola de formigó amb gelosia i trepadores (disseny "ToldoVerde")
+        function createPergolaMesh(mats) {
+            const g = new THREE.Group();
+            const rand = seededRandom(42);
+            const half = 1.75;
+
+            // Pilars de formigó amb sabata prefabricada
+            [[-half, -half], [half, -half], [-half, half], [half, half]].forEach(([x, z]) => {
+                addBox(g, 0.42, 0.12, 0.42, mats.concreteDark, x, 0.06, z);
+                addBox(g, 0.3, 2.9, 0.3, mats.concrete, x, 1.57, z);
+            });
+
+            // Bigues perimetrals
+            addBox(g, 3.9, 0.34, 0.3, mats.concrete, 0, 3.05, -half);
+            addBox(g, 3.9, 0.34, 0.3, mats.concrete, 0, 3.05, half);
+            addBox(g, 0.3, 0.34, 3.9, mats.concrete, -half, 3.05, 0);
+            addBox(g, 0.3, 0.34, 3.9, mats.concrete, half, 3.05, 0);
+
+            // Gelosia de lames
+            for (let x = -1.25; x <= 1.26; x += 0.5) {
+                addBox(g, 0.1, 0.16, 3.6, mats.concrete, x, 3.3, 0);
+            }
+            for (let z = -1.2; z <= 1.21; z += 0.8) {
+                addBox(g, 3.6, 0.06, 0.06, mats.steel, 0, 3.4, z);
+            }
+
+            // Trepadores sobre la coberta
+            for (let i = 0; i < 18; i++) {
+                const r = 0.22 + rand() * 0.28;
+                const leaf = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 0), rand() > 0.5 ? mats.foliage : mats.foliageLight);
+                leaf.position.set(-1.6 + rand() * 3.2, 3.45 + rand() * 0.12, -1.6 + rand() * 3.2);
+                leaf.scale.y = 0.55;
+                leaf.rotation.y = rand() * Math.PI;
+                leaf.castShadow = true;
+                g.add(leaf);
+            }
+
+            // Trepadores que pugen pels pilars i raïms penjants (glicina)
+            [[-half, -half], [half, half]].forEach(([x, z]) => {
+                for (let y = 0.6; y < 3.0; y += 0.45) {
+                    const leaf = new THREE.Mesh(new THREE.IcosahedronGeometry(0.17 + rand() * 0.08, 0), mats.foliage);
+                    leaf.position.set(x + (rand() - 0.5) * 0.35, y, z + (rand() - 0.5) * 0.35);
+                    leaf.castShadow = true;
+                    g.add(leaf);
+                }
+            });
+            for (let i = 0; i < 7; i++) {
+                const cluster = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.4, 6), mats.flower);
+                cluster.rotation.x = Math.PI;
+                const onX = rand() > 0.5;
+                cluster.position.set(
+                    onX ? -1.4 + rand() * 2.8 : (rand() > 0.5 ? half : -half),
+                    2.72,
+                    onX ? (rand() > 0.5 ? half : -half) : -1.4 + rand() * 2.8
+                );
+                g.add(cluster);
+            }
+            return g;
+        }
+
+        // Joc infantil inclusiu sota coberta de volta (disseny "CubiertaAgua")
+        function createPlaygroundMesh(mats) {
+            const g = new THREE.Group();
+
+            // Paviment de cautxú continu amb vora de formigó
+            addBox(g, 5.4, 0.08, 4.8, mats.concreteDark, 0, 0.04, 0);
+            addBox(g, 5.1, 0.1, 4.5, mats.playFloor, 0, 0.06, 0);
+
+            // Columnes i bigues
+            [-2.4, 0, 2.4].forEach(x => {
+                [-2.1, 2.1].forEach(z => addBox(g, 0.28, 2.4, 0.28, mats.concrete, x, 1.2, z));
+            });
+            addBox(g, 5.2, 0.3, 0.3, mats.concrete, 0, 2.5, -2.1);
+            addBox(g, 5.2, 0.3, 0.3, mats.concrete, 0, 2.5, 2.1);
+
+            // Volta de formigó (mitja canya rebaixada)
+            const vaultGeo = new THREE.CylinderGeometry(2.25, 2.25, 5.3, 32, 1, true, 0, Math.PI);
+            const vault = new THREE.Mesh(vaultGeo, mats.vault);
+            vault.rotation.z = Math.PI / 2;
+            vault.scale.set(0.42, 1, 1);
+            vault.position.set(0, 2.62, 0);
+            vault.castShadow = true;
+            vault.receiveShadow = true;
+            g.add(vault);
+
+            // Arcs als extrems
+            [-2.65, 2.65].forEach(x => {
+                const arch = new THREE.Mesh(new THREE.TorusGeometry(2.2, 0.1, 8, 32, Math.PI), mats.concrete);
+                arch.rotation.y = Math.PI / 2;
+                arch.scale.set(1, 0.42, 1);
+                arch.position.set(x, 2.62, 0);
+                arch.castShadow = true;
+                g.add(arch);
+            });
+
+            // Baixant de recollida d'aigua de pluja + dipòsit
+            addBox(g, 0.12, 2.4, 0.12, mats.steel, 2.55, 1.3, -2.25);
+            const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.7, 16), mats.concreteDark);
+            tank.position.set(2.75, 0.35, -2.55);
+            tank.castShadow = true;
+            g.add(tank);
+
+            // Joc inclusiu: plataforma baixa, rampa accessible, tobogan i plataforma giratòria
+            addBox(g, 1.4, 0.7, 1.4, mats.wood, -0.9, 0.46, -0.3);
+            const ramp = addBox(g, 1.6, 0.1, 1.0, mats.playAccent, 0.55, 0.42, -0.3);
+            ramp.rotation.z = -0.36;
+            const slide = addBox(g, 0.6, 0.08, 1.5, mats.playRoof, -0.9, 0.45, 1.05);
+            slide.rotation.x = 0.42;
+            const spinner = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.12, 24), mats.playAccent);
+            spinner.position.set(1.3, 0.2, 1.2);
+            spinner.castShadow = true;
+            g.add(spinner);
+            return g;
+        }
+
+        // ------------------------------------------------------------------
+        // MOBILIARI SEGONS ELS RENDERS PROPIS
+        // BancoLuminoso-Z, BancoLuminoso-U, MesaPicnicAptaSillaRuedas,
+        // MesaRedondaAptaSillaRuedas, BancosVerdes i Farola_Design.
+        // ------------------------------------------------------------------
+
+        // Banc lluminós en Z (centrat a l'origen, el seient mira cap a +Z)
+        function createZBench(mats) {
+            const g = new THREE.Group();
+            const profile = new THREE.Shape();
+            profile.moveTo(0, 0);
+            profile.lineTo(0.62, 0);
+            profile.lineTo(0.62, 0.44);
+            profile.lineTo(0.2, 0.44);
+            profile.lineTo(0.2, 0.86);
+            profile.lineTo(0, 0.86);
+            profile.lineTo(0, 0);
+            const geo = new THREE.ExtrudeGeometry(profile, {
+                depth: 2.0, bevelEnabled: true, bevelSize: 0.05, bevelThickness: 0.05, bevelSegments: 4
+            });
+            const bench = new THREE.Mesh(geo, mats.concrete);
+            bench.rotation.y = -Math.PI / 2;
+            bench.position.set(1.0, 0.05, -0.31);
+            bench.castShadow = true;
+            bench.receiveShadow = true;
+            g.add(bench);
+            const led = addBox(g, 1.9, 0.03, 0.03, mats.led, 0, 0.08, 0.34);
+            led.castShadow = false;
+            return g;
+        }
+
+        // Banc lluminós en U (forma de ferradura amb punts LED)
+        function createUBench(mats) {
+            const g = new THREE.Group();
+            const arc = Math.PI * 1.45;
+            const geo = new THREE.TorusGeometry(0.85, 0.3, 16, 48, arc);
+            const bench = new THREE.Mesh(geo, mats.concrete);
+            bench.rotation.x = -Math.PI / 2;
+            bench.scale.set(1, 1, 0.75);
+            bench.position.y = 0.225;
+            bench.castShadow = true;
+            bench.receiveShadow = true;
+            g.add(bench);
+            [0, arc].forEach(a => {
+                const dot = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), mats.led);
+                dot.position.set(Math.cos(a) * 1.16, 0.1, -Math.sin(a) * 1.16);
+                g.add(dot);
+            });
+            // Obertura orientada cap a +Z
+            g.rotation.y = -(arc / 2 + Math.PI) - Math.PI / 2;
+            return g;
+        }
+
+        // Taula de pícnic accessible: un sol banc i extrem lliure per a cadira de rodes
+        function createPicnicTable(mats) {
+            const g = new THREE.Group();
+            addBox(g, 2.4, 0.1, 0.86, mats.concrete, 0, 0.76, 0);
+            addBox(g, 0.14, 0.71, 0.62, mats.concrete, -0.85, 0.355, 0);
+            addBox(g, 0.14, 0.71, 0.62, mats.concrete, 0.35, 0.355, 0);
+            addBox(g, 1.6, 0.09, 0.34, mats.concrete, -0.4, 0.45, -0.72);
+            addBox(g, 0.14, 0.4, 0.3, mats.concrete, -1.0, 0.2, -0.72);
+            addBox(g, 0.14, 0.4, 0.3, mats.concrete, 0.2, 0.2, -0.72);
+            return g;
+        }
+
+        // Taula rodona accessible amb tres seients corbats i obertures PMR
+        function createRoundTable(mats) {
+            const g = new THREE.Group();
+            const top = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 0.74, 0.1, 40), mats.concrete);
+            top.position.y = 0.76;
+            top.castShadow = true;
+            top.receiveShadow = true;
+            g.add(top);
+            const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.38, 0.71, 24), mats.concrete);
+            foot.position.y = 0.355;
+            foot.castShadow = true;
+            g.add(foot);
+
+            const seatSpan = THREE.MathUtils.degToRad(68);
+            [90, 210, 330].forEach(deg => {
+                const mid = THREE.MathUtils.degToRad(deg);
+                const shape = new THREE.Shape();
+                shape.absarc(0, 0, 1.38, mid - seatSpan / 2, mid + seatSpan / 2, false);
+                shape.absarc(0, 0, 1.02, mid + seatSpan / 2, mid - seatSpan / 2, true);
+                const seatGeo = new THREE.ExtrudeGeometry(shape, {
+                    depth: 0.08, bevelEnabled: true, bevelSize: 0.03, bevelThickness: 0.03, bevelSegments: 2, curveSegments: 24
+                });
+                const seat = new THREE.Mesh(seatGeo, mats.concrete);
+                seat.rotation.x = -Math.PI / 2;
+                seat.position.y = 0.4;
+                seat.castShadow = true;
+                seat.receiveShadow = true;
+                g.add(seat);
+                const leg = addBox(g, 0.5, 0.4, 0.16, mats.concrete, Math.cos(mid) * 1.2, 0.2, -Math.sin(mid) * 1.2);
+                leg.rotation.y = mid;
+            });
+            return g;
+        }
+
+        // Taula de ping-pong de formigó (mides reglamentàries 2,74 x 1,525 m)
+        function createPingPongTable(mats) {
+            const g = new THREE.Group();
+            addBox(g, 2.74, 0.09, 1.525, mats.tableTop, 0, 0.76, 0);
+            addBox(g, 2.74, 0.012, 0.02, mats.canopy, 0, 0.81, -0.75);
+            addBox(g, 2.74, 0.012, 0.02, mats.canopy, 0, 0.81, 0.75);
+            addBox(g, 0.02, 0.012, 1.525, mats.canopy, 0, 0.81, 0);
+            addBox(g, 0.26, 0.72, 1.0, mats.concrete, -0.85, 0.36, 0);
+            addBox(g, 0.26, 0.72, 1.0, mats.concrete, 0.85, 0.36, 0);
+            addBox(g, 0.04, 0.16, 1.7, mats.steel, 0, 0.89, 0);
+            return g;
+        }
+
+        // Cada unitat del mòdul "Bancs Eco + Ping-Pong" combina peces dels renders
+        function createBenchVariant(mats, index) {
+            const g = new THREE.Group();
+            const place = (obj, x, z, rotY = 0) => {
+                obj.position.set(x, 0, z);
+                obj.rotation.y += rotY;
+                g.add(obj);
+            };
+            switch (index % 4) {
+                case 0:
+                    place(createPicnicTable(mats), 0, 0.15);
+                    place(createZBench(mats), 0, 1.3, Math.PI);
+                    break;
+                case 1:
+                    place(createRoundTable(mats), 0, 0);
+                    break;
+                case 2:
+                    place(createPingPongTable(mats), 0, -0.45);
+                    place(createZBench(mats), 0, 1.25, Math.PI);
+                    break;
+                default:
+                    place(createPingPongTable(mats), 0, -0.6);
+                    place(createUBench(mats), 0, 1.05);
+            }
+            return g;
+        }
+
+        // Compatibilitat: mòdul de banc per defecte
+        function createBenchAndPingPongMesh(mats) {
+            return createBenchVariant(mats, 0);
+        }
+
+        // Fanal corbat de formigó amb llum càlida i nebulització (Farola_Design)
+        function createCurvedLamp(mats) {
+            const g = new THREE.Group();
+            const V = (x, y, z) => new THREE.Vector3(x, y, z);
+            const curve = new THREE.CatmullRomCurve3([
+                V(0, 0, 0), V(0, 1.6, 0), V(0.02, 2.9, 0), V(0.18, 3.45, 0), V(0.55, 3.72, 0), V(0.85, 3.78, 0)
+            ]);
+            const pole = new THREE.Mesh(new THREE.TubeGeometry(curve, 48, 0.075, 14, false), mats.concrete);
+            pole.castShadow = true;
+            g.add(pole);
+            const base = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.13, 0.12, 16), mats.concrete);
+            base.position.y = 0.06;
+            g.add(base);
+
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 16), mats.concrete);
+            head.scale.set(1, 0.13, 0.62);
+            head.position.set(1.05, 3.8, 0);
+            head.rotation.z = -0.1;
+            head.castShadow = true;
+            g.add(head);
+
+            const disc = new THREE.Mesh(new THREE.CircleGeometry(0.4, 32), mats.led);
+            disc.rotation.x = Math.PI / 2;
+            disc.scale.set(1, 0.6, 1);
+            disc.position.set(1.05, 3.73, 0);
+            g.add(disc);
+
+            // Placa solar sobre el capçal, orientada al sol
+            const panelFrame = addBox(g, 0.78, 0.03, 0.52, mats.steel, 1.0, 3.93, 0);
+            panelFrame.rotation.z = 0.22;
+            const panel = addBox(g, 0.72, 0.03, 0.46, mats.solar, 1.0, 3.95, 0);
+            panel.rotation.z = 0.22;
+            for (let k = -1; k <= 1; k++) {
+                const cell = addBox(g, 0.72, 0.035, 0.01, mats.steel, 1.0, 3.955, k * 0.115);
+                cell.rotation.z = 0.22;
+                cell.castShadow = false;
+            }
+            addBox(g, 0.05, 0.12, 0.05, mats.steel, 1.0, 3.86, 0);
+
+            // Sensor ambiental (garita de lames: temperatura, humitat, qualitat de l'aire)
+            for (let k = 0; k < 4; k++) {
+                const louver = new THREE.Mesh(new THREE.CylinderGeometry(0.11 - k * 0.008, 0.11 - k * 0.008, 0.04, 20), mats.canopy);
+                louver.position.set(0, 2.35 + k * 0.06, 0.13);
+                louver.castShadow = true;
+                g.add(louver);
+            }
+            addBox(g, 0.04, 0.04, 0.1, mats.steel, 0, 2.43, 0.06);
+
+            // Node Wi-Fi públic amb antenes i LED d'estat
+            addBox(g, 0.14, 0.2, 0.09, mats.canopy, 0, 2.95, -0.1);
+            [-0.04, 0.04].forEach(dx => {
+                const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.26, 6), mats.steel);
+                ant.position.set(dx, 3.18, -0.1);
+                g.add(ant);
+            });
+            const wifiLed = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), mats.wifi);
+            wifiLed.position.set(0, 2.99, -0.15);
+            g.add(wifiLed);
+
+            if (renderMode !== 'stl') {
+                // Feix de llum i boira de nebulització (només visual)
+                const beam = new THREE.Mesh(
+                    new THREE.ConeGeometry(1.15, 3.7, 32, 1, true),
+                    new THREE.MeshBasicMaterial({
+                        color: 0xffd9a0, transparent: true, opacity: 0.1,
+                        depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide
+                    })
+                );
+                beam.position.set(1.05, 1.88, 0);
+                g.add(beam);
+
+                // Icona de senyal Wi-Fi (només visual)
+                const wifiGlow = new THREE.MeshBasicMaterial({ color: 0x3fa9f5, transparent: true, opacity: 0.95 });
+                [0.13, 0.23, 0.33].forEach(r => {
+                    const arc = new THREE.Mesh(new THREE.TorusGeometry(r, 0.022, 6, 24, Math.PI / 2), wifiGlow);
+                    arc.rotation.set(0, Math.PI / 2, Math.PI / 4);
+                    arc.position.set(0, 3.3, -0.1);
+                    g.add(arc);
+                });
+            }
+            return g;
+        }
+
+        // Banc-jardinera amb aromàtiques + fanal corbat (BancosVerdes + Farola)
+        function createPlanterAndLampMesh(mats) {
+            const g = new THREE.Group();
+            const rand = seededRandom(7);
+
+            // Cos en U arrodonit: seient davant, jardinera darrere, braços laterals
+            const body = new THREE.Shape();
+            body.moveTo(-0.85, -0.5);
+            body.lineTo(0.85, -0.5);
+            body.lineTo(0.85, 0.55);
+            body.lineTo(-0.85, 0.55);
+            body.lineTo(-0.85, -0.5);
+            const seatGeo = new THREE.ExtrudeGeometry(body, {
+                depth: 0.42, bevelEnabled: true, bevelSize: 0.06, bevelThickness: 0.06, bevelSegments: 4
+            });
+            const seat = new THREE.Mesh(seatGeo, mats.concrete);
+            seat.rotation.x = -Math.PI / 2;
+            seat.position.y = 0.06;
+            seat.castShadow = true;
+            seat.receiveShadow = true;
+            g.add(seat);
+            addBox(g, 1.7, 0.42, 0.42, mats.concrete, 0, 0.69, -0.29);
+            addBox(g, 0.18, 0.26, 0.86, mats.concrete, -0.76, 0.6, 0.06);
+            addBox(g, 0.18, 0.26, 0.86, mats.concrete, 0.76, 0.6, 0.06);
+            addBox(g, 1.5, 0.04, 0.3, mats.soil, 0, 0.9, -0.29);
+
+            // Espígol i romaní
+            for (let i = 0; i < 20; i++) {
+                const x = -0.68 + rand() * 1.36;
+                const z = -0.4 + rand() * 0.22;
+                const bush = new THREE.Mesh(new THREE.IcosahedronGeometry(0.1 + rand() * 0.06, 0), mats.foliageLight);
+                bush.position.set(x, 0.98, z);
+                bush.castShadow = true;
+                g.add(bush);
+                if (rand() > 0.3) {
+                    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.24, 5), mats.flower);
+                    spike.position.set(x + (rand() - 0.5) * 0.08, 1.15, z);
+                    g.add(spike);
+                }
+            }
+
+            // Fanal corbat al costat, amb el braç cap a la plaça
+            const lamp = createCurvedLamp(mats);
+            lamp.position.set(1.15, 0, -0.35);
+            lamp.rotation.y = -Math.PI / 2;
+            g.add(lamp);
+            return g;
+        }
+
+        // ------------------------------------------------------------------
+        // DECORACIÓ DE LA PLAÇA (render.png): font central, tòtems IoT,
+        // paviment podotàctil i parterres. Només visual, no s'exporta a STL.
+        // ------------------------------------------------------------------
+        const fountainJets = [];
+
+        function buildPlazaDecor() {
+            const d = new THREE.Group();
+            const M = (opts) => toLinear({ m: new THREE.MeshStandardMaterial(opts) }).m;
+            const granite = M({ color: 0xb9b5ad, roughness: 0.75 });
+            const water = M({ color: 0x4f9fc0, roughness: 0.05, metalness: 0.1, emissive: 0x0f3a4d, emissiveIntensity: 0.35 });
+            const jetMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55, depthWrite: false });
+            const steel = M({ color: 0xc3c6c9, roughness: 0.35, metalness: 0.25 });
+            const screen = M({ color: 0x1f2a33, roughness: 0.2, emissive: 0x2a5a78, emissiveIntensity: 0.6 });
+            const tactile = M({ color: 0x8f897e, roughness: 0.9 });
+            const solarMat = M({ color: 0x1d2c48, roughness: 0.25, metalness: 0.5 });
+            const lawn = M({ color: 0x6e9150, roughness: 1 });
+            const shrub = M({ color: 0x4f7a3f, roughness: 0.85, flatShading: true });
+            const shrub2 = M({ color: 0x7d9a52, roughness: 0.85, flatShading: true });
+
+            const cyl = (rt, rb, h, mat, x, y, z, seg = 48) => {
+                const mesh = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), mat);
+                mesh.position.set(x, y, z);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                d.add(mesh);
+                return mesh;
+            };
+
+            // Font circular en dos nivells
+            const fx = 1.6, fz = 0;
+            // Vas inferior: base + vora en anell + làmina d'aigua
+            cyl(1.8, 1.85, 0.3, granite, fx, 0.15, fz);
+            const rim = new THREE.Mesh(new THREE.TorusGeometry(1.68, 0.13, 12, 64), granite);
+            rim.rotation.x = Math.PI / 2;
+            rim.position.set(fx, 0.36, fz);
+            rim.castShadow = true;
+            d.add(rim);
+            cyl(1.6, 1.6, 0.03, water, fx, 0.33, fz).castShadow = false;
+            // Vas superior
+            cyl(0.7, 0.8, 0.45, granite, fx, 0.55, fz);
+            const rim2 = new THREE.Mesh(new THREE.TorusGeometry(0.68, 0.07, 10, 48), granite);
+            rim2.rotation.x = Math.PI / 2;
+            rim2.position.set(fx, 0.79, fz);
+            d.add(rim2);
+            cyl(0.64, 0.64, 0.03, water, fx, 0.785, fz).castShadow = false;
+            cyl(0.22, 0.28, 0.35, granite, fx, 0.95, fz);
+
+            const centralJet = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.09, 1.3, 12, 1, true), jetMat);
+            centralJet.position.set(fx, 1.65, fz);
+            d.add(centralJet);
+            fountainJets.push(centralJet);
+            for (let i = 0; i < 12; i++) {
+                const a = (i / 12) * Math.PI * 2;
+                const jet = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.04, 0.7, 8, 1, true), jetMat);
+                jet.position.set(fx + Math.cos(a) * 1.15, 0.72, fz + Math.sin(a) * 1.15);
+                jet.rotation.set(Math.sin(a) * 0.35, 0, -Math.cos(a) * 0.35);
+                d.add(jet);
+                fountainJets.push(jet);
+            }
+
+            // Tòtems IoT (dades ambientals i Wi-Fi)
+            [[-0.35, -2.1], [3.55, 2.1]].forEach(([x, z]) => {
+                const totem = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1.7, 0.16), steel);
+                totem.position.set(x, 0.85, z);
+                totem.castShadow = true;
+                d.add(totem);
+                const scr = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.26, 0.01), screen);
+                scr.position.set(x, 1.2, z + (z < 0 ? 0.085 : -0.085));
+                d.add(scr);
+                const pv = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.025, 0.3), solarMat);
+                pv.position.set(x, 1.78, z);
+                pv.rotation.x = z < 0 ? 0.3 : -0.3;
+                pv.castShadow = true;
+                d.add(pv);
+            });
+
+            // Franja de paviment podotàctil (recorregut accessible est-oest)
+            [[-6.05, 9.9], [7.2, 7.6]].forEach(([x, w]) => {
+                const strip = new THREE.Mesh(new THREE.BoxGeometry(w, 0.015, 0.36), tactile);
+                strip.position.set(x, 0.008, 0);
+                strip.receiveShadow = true;
+                d.add(strip);
+            });
+
+            // Parterres amb gespa i arbustos als extrems
+            const rand = seededRandom(19);
+            [-10.1, 10.1].forEach(x => {
+                const bed = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.12, 2.4), lawn);
+                bed.position.set(x, 0.06, 0);
+                bed.receiveShadow = true;
+                d.add(bed);
+                for (let i = 0; i < 6; i++) {
+                    const s = new THREE.Mesh(new THREE.IcosahedronGeometry(0.22 + rand() * 0.18, 0), rand() > 0.5 ? shrub : shrub2);
+                    s.position.set(x + (rand() - 0.5) * 0.9, 0.25, (rand() - 0.5) * 1.9);
+                    s.castShadow = true;
+                    d.add(s);
+                }
+            });
+            return d;
+        }
+
+        // ------------------------------------------------------------------
+        // ENTORN DEL RENDER REALISTA (només visual, no s'exporta a l'STL)
+        // ------------------------------------------------------------------
+        let environmentGroup = null;
+        let pavingTexture = null;
+
+        function makeCanvasTexture(w, h, draw) {
+            const c = document.createElement('canvas');
+            c.width = w;
+            c.height = h;
+            draw(c.getContext('2d'), w, h);
+            const tex = new THREE.CanvasTexture(c);
+            tex.encoding = THREE.sRGBEncoding;
+            return tex;
+        }
+
+        function getPavingTexture() {
+            if (pavingTexture) return pavingTexture;
+            pavingTexture = makeCanvasTexture(512, 512, (ctx, w, h) => {
+                ctx.fillStyle = '#9e978a';
+                ctx.fillRect(0, 0, w, h);
+                const rand = seededRandom(3);
+                const tw = 64, th = 32;
+                for (let row = 0; row < h / th; row++) {
+                    const off = (row % 2) * (tw / 2);
+                    for (let col = -1; col < w / tw + 1; col++) {
+                        const shade = 172 + Math.floor(rand() * 24);
+                        ctx.fillStyle = 'rgb(' + (shade + 6) + ',' + (shade + 2) + ',' + (shade - 8) + ')';
+                        ctx.fillRect(col * tw + off + 1, row * th + 1, tw - 2, th - 2);
+                    }
+                }
+            });
+            pavingTexture.wrapS = pavingTexture.wrapT = THREE.RepeatWrapping;
+            pavingTexture.repeat.set(5, 4);
+            pavingTexture.anisotropy = 4;
+            return pavingTexture;
+        }
+
+        function buildEnvironment() {
+            const env = new THREE.Group();
+            const rand = seededRandom(11);
+
+            // Gespa al voltant de la plaça
+            const grass = new THREE.Mesh(new THREE.CircleGeometry(60, 48),
+                toLinear({ m: new THREE.MeshStandardMaterial({ color: 0x7f9a62, roughness: 1 }) }).m);
+            grass.rotation.x = -Math.PI / 2;
+            grass.position.y = -0.41;
+            grass.receiveShadow = true;
+            env.add(grass);
+
+            // Vorada de formigó
+            const curbMat = toLinear({ m: new THREE.MeshStandardMaterial({ color: 0xbab4a8, roughness: 0.9 }) }).m;
+            [[0, -8.15, 22.6, 0.3], [0, 8.15, 22.6, 0.3], [-11.15, 0, 0.3, 16.6], [11.15, 0, 0.3, 16.6]].forEach(([x, z, w, d]) => {
+                const curb = new THREE.Mesh(new THREE.BoxGeometry(w, 0.5, d), curbMat);
+                curb.position.set(x, -0.18, z);
+                curb.receiveShadow = true;
+                env.add(curb);
+            });
+
+            // Arbres
+            const trunkMat = toLinear({ m: new THREE.MeshStandardMaterial({ color: 0x6b5443, roughness: 0.9 }) }).m;
+            const leafMats = [0x4f7341, 0x5d8549, 0x3f6236].map(c =>
+                toLinear({ m: new THREE.MeshStandardMaterial({ color: c, roughness: 0.85, flatShading: true }) }).m);
+            const spots = [];
+            // Arbrat al fons (costats nord i oest) per no tapar la vista inicial
+            for (let x = -14; x <= 12; x += 4.4) spots.push([x, -11.2]);
+            for (let z = -6.5; z <= 8; z += 4.6) spots.push([-14.5, z]);
+            spots.forEach(([x, z]) => {
+                const tree = new THREE.Group();
+                const hgt = 2.2 + rand() * 1.2;
+                const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.18, hgt, 8), trunkMat);
+                trunk.position.y = hgt / 2 - 0.4;
+                trunk.castShadow = true;
+                tree.add(trunk);
+                for (let k = 0; k < 3; k++) {
+                    const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(1.0 + rand() * 0.6, 1), leafMats[k % 3]);
+                    crown.position.set((rand() - 0.5) * 1.0, hgt - 0.2 + rand() * 0.9, (rand() - 0.5) * 1.0);
+                    crown.castShadow = true;
+                    tree.add(crown);
+                }
+                tree.position.set(x + (rand() - 0.5), 0, z + (rand() - 0.5));
+                env.add(tree);
+            });
+            env.add(buildPlazaDecor());
+            return env;
+        }
+
+        function updateEnvironment() {
+            if (!environmentGroup) {
+                environmentGroup = buildEnvironment();
+                scene.add(environmentGroup);
+            }
+            const realistic = renderMode !== 'stl';
+            environmentGroup.visible = realistic;
+            if (realistic) {
+                scene.background = skyTexture || new THREE.Color(0xdfe9ef);
+                scene.fog = new THREE.Fog(0xe4ecef, 38, 85);
+            } else {
+                scene.background = new THREE.Color(0x262522);
+                scene.fog = null;
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = sceneClock.getElapsedTime();
+            if (!userInteracted && !isDragging && renderMode !== 'stl') {
+                cameraAngle.theta += 0.0012;
+                updateCameraPosition();
+            }
+            fountainJets.forEach((jet, i) => {
+                jet.scale.y = 0.85 + 0.15 * Math.sin(time * 3 + i * 0.7);
+            });
+            renderer.render(scene, camera);
+        }
+
+        // ==========================================
+        // 3.5 CÀRREGA DE MAQUETES 3D (.STL / .OBJ) I RENDERS PROPIS
+        // ==========================================
+        function handleCustom3DUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const fileName = file.name;
+            const ext = fileName.split('.').pop().toLowerCase();
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const contents = e.target.result;
+                let loadedObject = null;
+
+                try {
+                    if (ext === 'stl') {
+                        const loader = new THREE.STLLoader();
+                        const geometry = loader.parse(contents);
+                        geometry.computeVertexNormals();
+                        const material = new THREE.MeshStandardMaterial({ color: 0xd46b48, roughness: 0.4 });
+                        loadedObject = new THREE.Mesh(geometry, material);
+                        // Ajustar rotació típica de Z-up (Cura/CAD) a Y-up (Three.js)
+                        loadedObject.rotation.x = -Math.PI / 2;
+                    } else if (ext === 'obj') {
+                        const loader = new THREE.OBJLoader();
+                        loadedObject = loader.parse(contents);
+                    }
+
+                    if (loadedObject) {
+                        // Normalitzar mida i centrar sobre el terra (Y = 0)
+                        const wrapper = new THREE.Group();
+                        wrapper.add(loadedObject);
+
+                        const box = new THREE.Box3().setFromObject(wrapper);
+                        const size = new THREE.Vector3();
+                        box.getSize(size);
+                        const maxDim = Math.max(size.x, size.y, size.z) || 1;
+                        customBaseScale = 5.5 / maxDim; // Escala inicial proporcionada a la plaça (5.5m)
+
+                        loadedObject.scale.setScalar(customBaseScale);
+
+                        const scaledBox = new THREE.Box3().setFromObject(wrapper);
+                        const center = new THREE.Vector3();
+                        scaledBox.getCenter(center);
+
+                        loadedObject.position.x -= center.x;
+                        loadedObject.position.z -= center.z;
+                        loadedObject.position.y -= scaledBox.min.y;
+
+                        customModelMesh = wrapper;
+
+                        // Mostrar controls de transformació
+                        document.getElementById('custom-model-name').textContent = fileName;
+                        document.getElementById('custom-model-controls').classList.remove('hidden');
+                        document.getElementById('custom-scale-slider').value = 1;
+                        document.getElementById('custom-rot-slider').value = 0;
+                        document.getElementById('custom-pos-x').value = 0;
+                        document.getElementById('custom-pos-z').value = 0;
+
+                        rebuild3DScene();
+                        showToast(currentLang === 'ca'
+                            ? `Maqueta 3D carregada a l'escena: ${fileName}`
+                            : `Maqueta 3D cargada en la escena: ${fileName}`
+                        );
+                    }
+                } catch (err) {
+                    showToast(currentLang === 'ca'
+                        ? "Error en llegir l'arxiu 3D. Comprova que sigui un .STL o .OBJ vàlid."
+                        : "Error al leer el archivo 3D. Comprueba que sea un .STL o .OBJ válido."
+                    );
+                }
+            };
+
+            if (ext === 'stl') {
+                reader.readAsArrayBuffer(file);
+            } else {
+                reader.readAsText(file);
+            }
+            event.target.value = '';
+        }
+
+        function updateCustomModelTransform() {
+            if (!customModelMesh) return;
+            const scaleMult = parseFloat(document.getElementById('custom-scale-slider').value);
+            const rotDeg = parseFloat(document.getElementById('custom-rot-slider').value);
+            const posX = parseFloat(document.getElementById('custom-pos-x').value);
+            const posZ = parseFloat(document.getElementById('custom-pos-z').value);
+
+            customModelMesh.scale.setScalar(scaleMult);
+            customModelMesh.rotation.y = THREE.MathUtils.degToRad(rotDeg);
+            customModelMesh.position.set(posX, 0, posZ);
+        }
+
+        function removeCustomModel() {
+            if (customModelMesh && plazaGroup) {
+                plazaGroup.remove(customModelMesh);
+            }
+            customModelMesh = null;
+            const ctrl = document.getElementById('custom-model-controls');
+            if (ctrl) ctrl.classList.add('hidden');
+        }
+
+        // Carregar foto real de l'espai (ex: parc de Molins de Rei) com a panell de referència dins el 3D
+        function handleBackdropUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const textureLoader = new THREE.TextureLoader();
+                textureLoader.load(e.target.result, (texture) => {
+                    if (customBackdropMesh && plazaGroup) {
+                        plazaGroup.remove(customBackdropMesh);
+                    }
+                    const panelGeo = new THREE.PlaneGeometry(22, 9);
+                    const panelMat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
+                    customBackdropMesh = new THREE.Mesh(panelGeo, panelMat);
+                    customBackdropMesh.position.set(0, 4.5, -8.1);
+                    plazaGroup.add(customBackdropMesh);
+
+                    document.getElementById('custom-backdrop-bar').classList.remove('hidden');
+                    showToast(currentLang === 'ca'
+                        ? "Foto de l'espai projectada al fons de l'escena 3D!"
+                        : "¡Foto del espacio proyectada al fondo de la escena 3D!"
+                    );
+                });
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        }
+
+        function removeCustomBackdrop() {
+            if (customBackdropMesh && plazaGroup) {
+                plazaGroup.remove(customBackdropMesh);
+            }
+            customBackdropMesh = null;
+            const bar = document.getElementById('custom-backdrop-bar');
+            if (bar) bar.classList.add('hidden');
+        }
+
+        // Galeria interactiva per als renders i fotos de maquetes de l'usuari
+        function handleGalleryRendersUpload(event) {
+            const files = Array.from(event.target.files);
+            if (!files.length) return;
+
+            const grid = document.getElementById('custom-renders-grid');
+
+            files.forEach((file) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imgSrc = e.target.result;
+                    const cleanTitle = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+
+                    const card = createGalleryCard(imgSrc, cleanTitle, null, false);
+                    grid.insertBefore(card, grid.lastElementChild);
+                };
+                reader.readAsDataURL(file);
+            });
+
+            showToast(currentLang === 'ca'
+                ? `${files.length} render(s) afegit(s) a la presentació!`
+                : `¡${files.length} render(s) añadido(s) a la presentación!`
+            );
+            event.target.value = '';
+        }
+
+        function openLightbox(src, title) {
+            document.getElementById('lightbox-img').src = src;
+            document.getElementById('lightbox-title').textContent = title;
+            document.getElementById('render-lightbox').classList.remove('hidden');
+        }
+
+        function closeLightbox() {
+            document.getElementById('render-lightbox').classList.add('hidden');
+        }
+
+        // ==========================================
+        // 4. GENERADOR I EXPORTADOR D'ARXIUS STL REALS
+        // ==========================================
+        function exportSTL() {
+            // Canviar visualment a mode STL perquè el tècnic vegi la malla que exporta
+            if (renderMode !== 'stl') {
+                setRenderMode('stl');
+            }
+
+            const scaleFactor = parseInt(document.getElementById('stl-scale').value, 10);
+            // Escala en mil·límetres per a impressora 3D (1 unitat ThreeJS = 1 metre real)
+            const mmScale = 1000 / scaleFactor;
+
+            let stlOutput = "solid CANPA_UrbanKit_Maqueta\n";
+
+            plazaGroup.updateMatrixWorld(true);
+            plazaGroup.traverse((child) => {
+                if (child.isMesh && child.geometry) {
+                    const geom = child.geometry.clone();
+                    geom.applyMatrix4(child.matrixWorld);
+
+                    const nonIndexed = geom.index ? geom.toNonIndexed() : geom;
+                    const pos = nonIndexed.attributes.position;
+
+                    for (let i = 0; i < pos.count; i += 3) {
+                        const vA = new THREE.Vector3().fromBufferAttribute(pos, i).multiplyScalar(mmScale);
+                        const vB = new THREE.Vector3().fromBufferAttribute(pos, i + 1).multiplyScalar(mmScale);
+                        const vC = new THREE.Vector3().fromBufferAttribute(pos, i + 2).multiplyScalar(mmScale);
+
+                        // Calcular normal de la cara
+                        const cb = new THREE.Vector3().subVectors(vC, vB);
+                        const ab = new THREE.Vector3().subVectors(vA, vB);
+                        cb.cross(ab).normalize();
+
+                        // Intercanviar Y i Z perquè Z sigui l'alçada vertical al laminador 3D (Cura/PrusaSlicer)
+                        stlOutput += `  facet normal ${cb.x.toFixed(5)} ${(-cb.z).toFixed(5)} ${cb.y.toFixed(5)}\n`;
+                        stlOutput += `    outer loop\n`;
+                        stlOutput += `      vertex ${vA.x.toFixed(3)} ${(-vA.z).toFixed(3)} ${vA.y.toFixed(3)}\n`;
+                        stlOutput += `      vertex ${vB.x.toFixed(3)} ${(-vB.z).toFixed(3)} ${vB.y.toFixed(3)}\n`;
+                        stlOutput += `      vertex ${vC.x.toFixed(3)} ${(-vC.z).toFixed(3)} ${vC.y.toFixed(3)}\n`;
+                        stlOutput += `    endloop\n`;
+                        stlOutput += `  endfacet\n`;
+                    }
+                }
+            });
+
+            stlOutput += "endsolid CANPA_UrbanKit_Maqueta\n";
+
+            // Descarregar arxiu .stl
+            const blob = new Blob([stlOutput], { type: 'application/sla' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `CANPA_UrbanKit_Maqueta_Escala_1_${scaleFactor}.stl`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            // Actualitzar cotas i mostrar notificació
+            const baseW = Math.round(22 * mmScale);
+            const baseD = Math.round(16 * mmScale);
+            document.getElementById('stl-dims-text').textContent = `Base: ${baseW} x ${baseD} mm (Escala 1:${scaleFactor}) · PLA/Resina`;
+
+            showToast(currentLang === 'ca' 
+                ? `Descarregat: CANPA_UrbanKit_Maqueta_Escala_1_${scaleFactor}.stl` 
+                : `Descargado: CANPA_UrbanKit_Maqueta_Escala_1_${scaleFactor}.stl`
+            );
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast-notification');
+            document.getElementById('toast-message').textContent = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 4000);
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            document.getElementById('form-success').classList.remove('hidden');
+            e.target.reset();
+        }
+
+        // Inicialitzar en carregar
+        window.onload = function() {
+            renderModuleList();
+            renderPreloadedGallery();
+            initThreeJS();
+            updateMetrics();
+        };
+    </script>
+</body>
+</html>

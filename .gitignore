@@ -1,0 +1,22 @@
+# Només es publica la web; la resta de la carpeta (PDF, PPTX, esborranys) queda fora
+/*
+!/.gitignore
+!/README.md
+!/index.html
+!/index2.html
+!/canpa_urbankit_b2g_configurador_3d_i_plataforma_municipal.html
+!/BancoLuminoso-U_Design.jfif
+!/BancoLuminoso-Z_Design.jfif
+!/BancosVerdes_Design.png
+!/CubiertaAgua_Design.png
+!/Farola_Design.jfif
+!/Logo_CANPA_icono.png
+!/Logo_CANPA_texto.png
+!/Logo_CANPA.png
+!/MesaPicnicAptaSillaRuedas_Design.png
+!/MesaRedondaAptaSillaRuedas_Design.png
+!/ParqueMolins_VistaDron_After.png
+!/ParqueMolins_VistaDron_Before.jfif
+!/PlazaAtardecer_Design.png
+!/ToldoVerde_Design.png
+!/render.png

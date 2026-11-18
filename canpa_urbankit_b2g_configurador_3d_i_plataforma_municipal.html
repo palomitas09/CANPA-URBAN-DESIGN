@@ -172,6 +172,51 @@
         }
         .module-render-wrap:hover .module-render-zoom, .module-render-zoom:focus-visible { opacity: 1; }
         @media (hover: none) { .module-render-zoom { opacity: 1; } }
+        .gallery-filter {
+            display: inline-flex; align-items: center; gap: .4rem; padding: .45rem .8rem; border-radius: 999px;
+            font-size: 12px; font-weight: 600; color: #3f5a60; background: #fff; border: 1px solid #dfe2da;
+            cursor: pointer; transition: background-color .15s, border-color .15s, color .15s;
+        }
+        .gallery-filter span { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; color: #7b807c; background: #eceee7; border-radius: 999px; padding: 1px 6px; }
+        .gallery-filter:hover { border-color: #2D5A27; color: #2D5A27; }
+        .gallery-filter.is-active { background: #2D5A27; border-color: #2D5A27; color: #fff; }
+        .gallery-filter.is-active span { background: rgba(255,255,255,.18); color: #fff; }
+        .gallery-filter:focus-visible { outline: 2px solid #F4A261; outline-offset: 2px; }
+        .gallery-tile { position: relative; border-radius: 1.1rem; overflow: hidden; background: #F4F6F0; border: 1px solid #dfe2da; aspect-ratio: 4 / 3; box-shadow: 0 1px 2px rgba(31,78,91,.05); transition: box-shadow .25s, transform .25s; }
+        .gallery-tile:hover { box-shadow: 0 12px 28px -12px rgba(31,78,91,.35); transform: translateY(-2px); }
+        .gallery-tile-media { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: zoom-in; }
+        .gallery-tile-media img { width: 100%; height: 100%; object-fit: cover; transition: transform .45s; }
+        .gallery-tile:hover .gallery-tile-media img { transform: scale(1.06); }
+        .gallery-tile-media:focus-visible { outline: 3px solid #F4A261; outline-offset: -3px; }
+        .gallery-tile-chip { position: absolute; top: .55rem; left: .55rem; max-width: calc(100% - 3rem); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9.5px; font-weight: 700; color: #fff; background: rgba(45, 90, 39, .9); padding: 3px 7px; border-radius: 7px; }
+        .gallery-tile-caption {
+            position: absolute; left: 0; right: 0; bottom: 0; padding: 1.6rem .7rem .6rem; text-align: left;
+            font-size: 11.5px; font-weight: 600; line-height: 1.3; color: #fff;
+            background: linear-gradient(to top, rgba(21, 53, 62, .88), rgba(21, 53, 62, 0));
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .gallery-tile-del {
+            position: absolute; top: .5rem; right: .5rem; width: 24px; height: 24px; border-radius: 8px; font-size: 11px;
+            display: flex; align-items: center; justify-content: center; color: #fff; background: rgba(31, 78, 91, .75);
+            opacity: 0; transition: opacity .15s, background-color .15s; cursor: pointer;
+        }
+        .gallery-tile:hover .gallery-tile-del, .gallery-tile-del:focus-visible { opacity: 1; }
+        .gallery-tile-del:hover { background: #b9682a; }
+        @media (hover: none) { .gallery-tile-del { opacity: .85; } }
+        .gallery-upload-tile {
+            aspect-ratio: 4 / 3; border-radius: 1.1rem; border: 2px dashed #c8cac4; background: #F4F6F0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+            cursor: pointer; transition: border-color .2s, background-color .2s;
+        }
+        .gallery-upload-tile:hover { border-color: #2D5A27; background: #eef3ec; }
+        .gallery-more-btn {
+            display: inline-flex; align-items: center; gap: .5rem; padding: .7rem 1.3rem; border-radius: 999px;
+            font-size: 13px; font-weight: 700; color: #fff; background: #1F4E5B; cursor: pointer; transition: background-color .15s, transform .15s;
+        }
+        .gallery-more-btn span { font-family: 'JetBrains Mono', monospace; font-size: 11px; background: rgba(255,255,255,.18); border-radius: 999px; padding: 1px 7px; }
+        .gallery-more-btn:hover { background: #15353e; transform: translateY(-1px); }
+        .gallery-more-btn.is-ghost { background: transparent; color: #1F4E5B; border: 1px solid #dfe2da; }
+        .gallery-more-btn.is-ghost:hover { background: #eceee7; }
         .ba-compare { position: relative; aspect-ratio: 1376 / 768; overflow: hidden; user-select: none; }
         .ba-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
         .ba-before { position: absolute; inset: 0; clip-path: inset(0 calc(100% - var(--ba)) 0 0); }
@@ -604,22 +649,21 @@
                 </div>
             </div>
 
-            <!-- Graella de Renders Pujats per l'Usuari -->
-            <div id="custom-renders-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Targeta d'exemple / placeholder inicial interactiu -->
-                <div onclick="document.getElementById('upload-renders-gallery').click()" class="group border-2 border-dashed border-stone-300 hover:border-forest-600 rounded-3xl p-8 flex flex-col items-center justify-center text-center min-h-[280px] bg-stone-50 hover:bg-forest-50/40 transition-all cursor-pointer">
-                    <div class="w-14 h-14 rounded-2xl bg-white border border-stone-200 text-forest-700 group-hover:scale-110 transition-transform flex items-center justify-center text-2xl shadow-xs mb-4">
-                        <i class="fa-solid fa-images"></i>
-                    </div>
-                    <h3 class="font-bold text-stone-900 text-base" data-i18n="gal_empty_title">Carrega aquí els teus renders</h3>
-                    <p class="text-xs text-stone-500 mt-1.5 max-w-xs leading-relaxed" data-i18n="gal_empty_desc">
-                        Selecciona una o diverses imatges (JPG, PNG, WEBP) del vostre parc infantil cobert, la comparativa Abans/Després o la maqueta física.
-                    </p>
-                    <span class="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-forest-700">
-                        <i class="fa-solid fa-plus"></i> <span data-i18n="gal_empty_cta">Seleccionar arxius del dispositiu</span>
+            <!-- Filtres de la galeria -->
+            <div id="gallery-filters" class="flex flex-wrap gap-2 mb-5" role="tablist" aria-label="Filtres"></div>
+
+            <!-- Mosaic de renders (precarregats + pujats per l'usuari) -->
+            <div id="custom-renders-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                <button type="button" id="gallery-upload-tile" onclick="document.getElementById('upload-renders-gallery').click()" class="gallery-upload-tile group">
+                    <span class="w-11 h-11 rounded-2xl bg-white border border-stone-200 text-forest-700 group-hover:scale-110 transition-transform flex items-center justify-center text-lg shadow-xs">
+                        <i class="fa-solid fa-plus"></i>
                     </span>
-                </div>
+                    <span class="font-bold text-stone-900 text-sm mt-2.5" data-i18n="gal_empty_title">Carrega aquí els teus renders</span>
+                    <span class="text-[11px] text-stone-500 mt-1 leading-snug px-3" data-i18n="gal_empty_cta">Seleccionar arxius del dispositiu</span>
+                </button>
             </div>
+
+            <div id="gallery-more" class="mt-6 flex justify-center"></div>
         </div>
     </section>
 
@@ -845,6 +889,17 @@
                 gal_card_sub: "CANPA UrbanKit · Disseny propi",
                 gal_general: "Proposta general",
                 gal_maqueta: "Maqueta 3D",
+                gal_f_all: "Tot",
+                gal_f_pergola: "Pèrgoles i cobertes",
+                gal_f_bench: "Bancs i taules",
+                gal_f_play: "Joc infantil",
+                gal_f_green: "Jardineres i fanals",
+                gal_f_general: "Propostes",
+                gal_f_maqueta: "Maquetes 3D",
+                gal_f_upload: "Pujats per vosaltres",
+                gal_uploaded: "Pujats per vosaltres",
+                gal_more: "Veure'n més",
+                gal_less: "Mostrar menys",
                 proc_tag: "METODOLOGIA DE TREBALL B2G",
                 proc_title: "Com implementem CANPA UrbanKit al teu municipi",
                 proc_desc: "Un procés àgil pensat per als serveis tècnics municipals, regidories d'urbanisme i transició ecològica.",
@@ -943,6 +998,17 @@
                 gal_card_sub: "CANPA UrbanKit · Diseño propio",
                 gal_general: "Propuesta general",
                 gal_maqueta: "Maqueta 3D",
+                gal_f_all: "Todo",
+                gal_f_pergola: "Pérgolas y cubiertas",
+                gal_f_bench: "Bancos y mesas",
+                gal_f_play: "Juego infantil",
+                gal_f_green: "Jardineras y farolas",
+                gal_f_general: "Propuestas",
+                gal_f_maqueta: "Maquetas 3D",
+                gal_f_upload: "Subidos por vosotros",
+                gal_uploaded: "Subidos por vosotros",
+                gal_more: "Ver más",
+                gal_less: "Mostrar menos",
                 proc_tag: "METODOLOGÍA DE TRABAJO B2G",
                 proc_title: "Cómo implementamos CANPA UrbanKit en tu municipio",
                 proc_desc: "Un proceso ágil pensado para los servicios técnicos municipales, concejalías de urbanismo y transición ecológica.",
@@ -1362,7 +1428,7 @@
               ca: 'Pèrgola de formigó amb trepadores i nebulització', es: 'Pérgola de hormigón con trepadoras y nebulización' },
             { src: 'CubiertaAgua_Design.png', module: 'pergola',
               ca: "Coberta de volta amb captació d'aigua de pluja", es: 'Cubierta de bóveda con captación de agua de lluvia' },
-            { src: 'Modulo-CubiertaCalle_VistaDron.jfif', module: 'pergola',
+            { src: 'Modulo-CubiertaCalle_VistaDron.jfif', module: 'pergola', also: ['general'],
               ca: 'Coberta modular de carrer: vista de dron', es: 'Cubierta modular de calle: vista de dron' },
             { src: 'Modulo-CubiertaCalle_VistaInferior.jfif', module: 'pergola',
               ca: 'Coberta modular de carrer: vista inferior', es: 'Cubierta modular de calle: vista inferior' },
@@ -1378,6 +1444,8 @@
               ca: 'Banc-jardinera amb plantes aromàtiques', es: 'Banco-jardinera con plantas aromáticas' },
             { src: 'Farola_Design.jfif', module: 'green',
               ca: 'Fanal corbat de formigó amb nebulització', es: 'Farola curva de hormigón con nebulización' },
+            { src: 'Modulo-PlazaFuente.png', module: null,
+              ca: 'Plaça amb font central: taules accessibles, bancs i jardinera', es: 'Plaza con fuente central: mesas accesibles, bancos y jardinera' },
             { src: 'PlazaAtardecer_Design.png', module: null,
               ca: 'Plaça al capvespre: fanals, bancs lluminosos i jardineres', es: 'Plaza al atardecer: farolas, bancos luminosos y jardineras' },
             { src: 'Parc_Molins_VistaDron_After_v2.png', module: 'play',
@@ -1396,59 +1464,106 @@
               ca: 'Plaça amb fonts i tòtems IoT', es: 'Plaza con fuentes y tótems IoT' }
         ];
 
-        function createGalleryCard(src, title, tag, preloaded) {
+        // ---- Galeria compacta amb filtres ----
+        const GALLERY_FILTERS = ['all', 'pergola', 'bench', 'play', 'green', 'general', 'maqueta', 'upload'];
+        const GALLERY_LIMIT = 7; // + la casella de pujar = 2 files de 4
+        let galleryFilter = 'all';
+        let galleryExpanded = false;
+
+        function galleryCategory(r) {
+            const main = r.tag === 'gal_maqueta' ? 'maqueta' : (r.module || 'general');
+            return [main].concat(r.also || []).join(' ');
+        }
+
+        function galleryFilterLabel(key) {
+            return t('gal_f_' + key);
+        }
+
+        function createGalleryCard(src, title, tag, preloaded, category) {
             const card = document.createElement('div');
-            card.className = 'gallery-card group bg-white rounded-3xl border border-stone-200 overflow-hidden shadow-xs hover:shadow-lg transition-all flex flex-col'
-                + (preloaded ? ' is-preloaded' : '');
+            card.className = 'gallery-tile group' + (preloaded ? ' is-preloaded' : '');
+            card.dataset.cat = category || 'upload';
+            card.dataset.src = src;
+            card.dataset.title = title;
 
             const media = document.createElement('button');
             media.type = 'button';
-            media.className = 'relative aspect-[4/3] bg-[#F4F6F0] overflow-hidden cursor-zoom-in block w-full';
-            media.addEventListener('click', () => openLightbox(src, titleInput.value));
+            media.className = 'gallery-tile-media';
+            media.setAttribute('aria-label', title);
+            media.addEventListener('click', () => openGalleryAt(card));
 
             const img = document.createElement('img');
             img.src = src;
-            img.alt = title;
+            img.alt = '';
             img.loading = 'lazy';
-            img.className = 'w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300';
             media.appendChild(img);
-
-            const expand = document.createElement('span');
-            expand.className = 'absolute top-3 right-3 bg-stone-900/80 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1';
-            expand.innerHTML = '<i class="fa-solid fa-expand"></i>';
-            media.appendChild(expand);
 
             if (tag) {
                 const chip = document.createElement('span');
-                chip.className = 'absolute top-3 left-3 bg-forest-700 text-white text-[10px] font-bold px-2 py-1 rounded-lg';
+                chip.className = 'gallery-tile-chip';
                 chip.textContent = tag;
                 media.appendChild(chip);
             }
-
-            const footer = document.createElement('div');
-            footer.className = 'p-4 flex items-center justify-between gap-2 border-t border-stone-100';
-            const info = document.createElement('div');
-            info.className = 'min-w-0 flex-1';
-            const titleInput = document.createElement('input');
-            titleInput.type = 'text';
-            titleInput.value = title;
-            titleInput.title = currentLang === 'ca' ? 'Clica per editar el títol' : 'Haz clic para editar el título';
-            titleInput.className = 'font-bold text-sm text-stone-900 bg-transparent border-b border-transparent focus:border-forest-600 focus:outline-none w-full truncate';
-            const sub = document.createElement('span');
-            sub.className = 'text-[11px] text-stone-500 block mt-0.5';
-            sub.textContent = t('gal_card_sub');
-            info.append(titleInput, sub);
+            const caption = document.createElement('span');
+            caption.className = 'gallery-tile-caption';
+            caption.textContent = title;
+            media.appendChild(caption);
 
             const del = document.createElement('button');
             del.type = 'button';
-            del.className = 'text-stone-400 hover:text-terracotta-700 p-2 rounded-lg cursor-pointer';
-            del.title = currentLang === 'ca' ? 'Eliminar' : 'Eliminar';
-            del.innerHTML = '<i class="fa-solid fa-trash-can text-xs"></i>';
-            del.addEventListener('click', () => card.remove());
+            del.className = 'gallery-tile-del';
+            del.title = 'Eliminar';
+            del.setAttribute('aria-label', 'Eliminar: ' + title);
+            del.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+            del.addEventListener('click', () => { card.remove(); applyGalleryFilter(); });
 
-            footer.append(info, del);
-            card.append(media, footer);
+            card.append(media, del);
             return card;
+        }
+
+        function galleryCards() {
+            return Array.from(document.querySelectorAll('#custom-renders-grid .gallery-tile'));
+        }
+
+        function openGalleryAt(card) {
+            const visible = galleryCards().filter(c => galleryFilter === 'all' || c.dataset.cat.split(' ').includes(galleryFilter));
+            const items = visible.map(c => ({ src: c.dataset.src, title: c.dataset.title }));
+            openLightboxSet(items, Math.max(0, visible.indexOf(card)));
+        }
+
+        function setGalleryFilter(key) {
+            galleryFilter = key;
+            galleryExpanded = false;
+            applyGalleryFilter();
+        }
+
+        function applyGalleryFilter() {
+            const cards = galleryCards();
+            const counts = { all: cards.length };
+            cards.forEach(c => c.dataset.cat.split(' ').forEach(k => { counts[k] = (counts[k] || 0) + 1; }));
+
+            const bar = document.getElementById('gallery-filters');
+            bar.innerHTML = GALLERY_FILTERS.filter(k => counts[k]).map(k => `
+                <button type="button" role="tab" aria-selected="${galleryFilter === k}" class="gallery-filter ${galleryFilter === k ? 'is-active' : ''}" onclick="setGalleryFilter('${k}')">
+                    ${galleryFilterLabel(k)}<span>${counts[k]}</span>
+                </button>`).join('');
+
+            const matching = cards.filter(c => galleryFilter === 'all' || c.dataset.cat.split(' ').includes(galleryFilter));
+            const limit = galleryExpanded ? Infinity : GALLERY_LIMIT;
+            cards.forEach(c => c.classList.add('hidden'));
+            matching.forEach((c, i) => c.classList.toggle('hidden', i >= limit));
+
+            const more = document.getElementById('gallery-more');
+            const hiddenCount = matching.length - Math.min(matching.length, limit);
+            more.innerHTML = hiddenCount > 0
+                ? `<button type="button" class="gallery-more-btn" onclick="galleryExpanded = true; applyGalleryFilter();">
+                       <i class="fa-solid fa-grip"></i> ${t('gal_more')} <span>+${hiddenCount}</span>
+                   </button>`
+                : (galleryExpanded && matching.length > GALLERY_LIMIT
+                    ? `<button type="button" class="gallery-more-btn is-ghost" onclick="galleryExpanded = false; applyGalleryFilter(); document.getElementById('renders-propis').scrollIntoView({ behavior: 'smooth' });">
+                           <i class="fa-solid fa-chevron-up"></i> ${t('gal_less')}
+                       </button>`
+                    : '');
         }
 
         function renderPreloadedGallery() {
@@ -1458,8 +1573,9 @@
             const anchor = grid.firstElementChild;
             GALLERY_RENDERS.forEach(r => {
                 const tag = r.tag ? t(r.tag) : (r.module ? t('mod_' + r.module + '_name') : t('gal_general'));
-                grid.insertBefore(createGalleryCard(r.src, r[currentLang], tag, true), anchor);
+                grid.insertBefore(createGalleryCard(r.src, r[currentLang], tag, true, galleryCategory(r)), anchor);
             });
+            applyGalleryFilter();
         }
 
         function resetScene() {
@@ -2793,8 +2909,11 @@
                     const imgSrc = e.target.result;
                     const cleanTitle = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
 
-                    const card = createGalleryCard(imgSrc, cleanTitle, null, false);
-                    grid.insertBefore(card, grid.lastElementChild);
+                    const card = createGalleryCard(imgSrc, cleanTitle, t('gal_uploaded'), false, 'upload');
+                    grid.insertBefore(card, document.getElementById('gallery-upload-tile'));
+                    galleryFilter = 'upload';
+                    galleryExpanded = true;
+                    applyGalleryFilter();
                 };
                 reader.readAsDataURL(file);
             });
